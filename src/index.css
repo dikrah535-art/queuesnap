@@ -2,95 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
-/* QueueSafe design system - Deep Navy + Safety Orange. All colors HSL. */
+/* QueueSafe design system — Apple-inspired: minimal, light, generous spacing. All HSL. */
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Surfaces */
+    --background: 0 0% 100%;
+    --foreground: 220 15% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 15% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 15% 12%;
 
-    /* Deep navy */
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 222 47% 24%;
+    /* System Blue — primary action color */
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 211 100% 56%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* Soft neutral surfaces */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 15% 12%;
 
-    --muted: 210 30% 94%;
-    --muted-foreground: 215 16% 40%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    /* Safety orange */
-    --accent: 22 95% 53%;
+    /* Accent matches primary for one consistent action color */
+    --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
-    --accent-glow: 22 95% 63%;
+    --accent-glow: 211 100% 60%;
 
-    --success: 142 71% 38%;
+    --success: 142 70% 42%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+    --warning: 35 95% 50%;
+    --warning-foreground: 220 15% 12%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 28% 88%;
-    --input: 214 28% 88%;
-    --ring: 22 95% 53%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 211 100% 50%;
 
-    --radius: 0.75rem;
+    /* Generous, Apple-like radius */
+    --radius: 1rem;
 
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(222 47% 18%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(22 95% 53%) 0%, hsl(15 95% 55%) 100%);
-    --shadow-elegant: 0 10px 30px -12px hsl(222 47% 11% / 0.25);
-    --shadow-glow: 0 0 40px hsl(22 95% 53% / 0.35);
-    --shadow-card: 0 1px 3px hsl(222 47% 11% / 0.06), 0 4px 12px hsl(222 47% 11% / 0.04);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 97%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(211 100% 50%) 0%, hsl(211 100% 60%) 100%);
+
+    /* Soft, layered shadows */
+    --shadow-elegant: 0 20px 50px -20px hsl(220 15% 12% / 0.12);
+    --shadow-glow: 0 10px 40px -10px hsl(211 100% 50% / 0.35);
+    --shadow-card: 0 1px 2px hsl(220 15% 12% / 0.04), 0 8px 24px -12px hsl(220 15% 12% / 0.08);
 
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 22 95% 53%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 12%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 18%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 22 95% 53%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 15% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 211 100% 50%;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 222 47% 16%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 16%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 22 95% 53%;
+    --background: 220 15% 7%;
+    --foreground: 220 14% 96%;
+    --card: 220 15% 10%;
+    --card-foreground: 220 14% 96%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 211 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 220 9% 65%;
+    --accent: 211 100% 56%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 63% 40%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 22 95% 53%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 211 100% 56%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground antialiased; font-feature-settings: "cv02","cv03","cv04","cv11"; }
-  h1,h2,h3,h4 { @apply font-semibold tracking-tight; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+    font-feature-settings: "cv02","cv03","cv04","cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { @apply font-semibold tracking-tight; letter-spacing: -0.02em; }
+  h1 { letter-spacing: -0.035em; }
 }
 
 @layer utilities {
@@ -102,7 +113,7 @@
   .transition-smooth { transition: var(--transition-smooth); }
 
   @keyframes ring-pulse {
-    0%,100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--accent) / 0.7); }
+    0%,100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--accent) / 0.6); }
     50% { transform: scale(1.03); box-shadow: 0 0 0 24px hsl(var(--accent) / 0); }
   }
   .animate-ring-pulse { animation: ring-pulse 1.2s ease-in-out infinite; }
@@ -111,5 +122,5 @@
     0%,100% { background-color: hsl(var(--accent)); }
     50% { background-color: hsl(var(--accent-glow)); }
   }
-  .animate-flash { animation: flash-bg 0.6s ease-in-out infinite; }
+  .animate-flash { animation: flash-bg 0.8s ease-in-out infinite; }
 }

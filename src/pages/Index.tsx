@@ -1,51 +1,44 @@
 import { Link } from "react-router-dom";
-import { Smartphone, QrCode, ScanLine, ShieldCheck, Zap, Users } from "lucide-react";
+import { QrCode, ScanLine, ShieldCheck, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
   { icon: ShieldCheck, title: "Secure handover", desc: "Token + QR verification prevents double collection or misplaced devices." },
-  { icon: Users, title: "Smart batching", desc: "Admin calls users in groups of 5, eliminating crowd congestion at the counter." },
+  { icon: Users, title: "Smart batching", desc: "Admins call users in groups, eliminating crowd congestion at the counter." },
 ];
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-30">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-gradient shadow-glow">
-              <Smartphone className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <span className="text-lg font-bold tracking-tight">QueueSafe</span>
-          </div>
-          <nav className="flex items-center gap-2">
+          <Link to="/" className="text-lg font-semibold tracking-tight">QueueSafe</Link>
+          <nav className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm"><Link to="/status">Status</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/admin/login">Admin</Link></Button>
           </nav>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="bg-hero text-primary-foreground">
-        <div className="container py-20 md:py-28">
+      <section className="bg-hero">
+        <div className="container py-24 md:py-36">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
-              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-              Crowd-controlled device management
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Submit. Sit back. <span className="text-accent">Get called.</span>
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-foreground">
+              Submit. Sit back.
+              <br />
+              <span className="text-primary">Get called.</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-base md:text-lg text-primary-foreground/75">
-              Replace chaotic device drop-off counters with a digital queue. Token-based check-in,
-              real-time pickup notifications, and verified handover — all in one place.
+            <p className="mx-auto mt-6 max-w-xl text-lg md:text-xl text-muted-foreground">
+              A smarter way to drop off your device. Token-based check-in with real-time pickup notifications.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild variant="hero" size="lg" className="w-full sm:w-auto">
-                <Link to="/checkin"><QrCode className="mr-1" /> Self check-in</Link>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                <Link to="/checkin"><QrCode className="mr-1" /> Start check-in</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+              <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto text-primary hover:bg-primary/5">
                 <Link to="/status"><ScanLine className="mr-1" /> Check status</Link>
               </Button>
             </div>
@@ -54,21 +47,25 @@ const Index = () => {
       </section>
 
       {/* Features */}
-      <section className="container py-16 md:py-20">
+      <section className="container py-20 md:py-28">
+        <div className="mx-auto max-w-2xl text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Designed for calm.</h2>
+          <p className="mt-3 text-muted-foreground">Three simple ideas. Zero counter chaos.</p>
+        </div>
         <div className="grid gap-6 md:grid-cols-3">
           {features.map((f) => (
-            <div key={f.title} className="rounded-2xl border bg-card p-6 shadow-card transition-smooth hover:shadow-elegant">
-              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-accent/10 text-accent">
+            <div key={f.title} className="rounded-2xl border border-border/60 bg-card p-8 shadow-card transition-smooth hover:shadow-elegant">
+              <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <f.icon className="h-5 w-5" />
               </div>
               <h3 className="text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
+      <footer className="border-t border-border/60 py-10 text-center text-sm text-muted-foreground">
         QueueSafe · Smart Device Submission System
       </footer>
     </div>
