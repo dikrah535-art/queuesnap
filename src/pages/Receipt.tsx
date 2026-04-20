@@ -28,15 +28,20 @@ const Receipt = () => {
   if (notFound) return (
     <div className="grid min-h-screen place-items-center bg-background p-6">
       <div className="max-w-sm text-center space-y-4">
-        <h2 className="text-xl font-bold">Receipt not found</h2>
+        <h2 className="text-xl font-bold">Invalid or expired token</h2>
         <p className="text-sm text-muted-foreground">Token <span className="font-mono">{id}</span> doesn't match any device.</p>
         <Button asChild variant="hero"><Link to="/checkin"><ArrowLeft /> Back to check-in</Link></Button>
       </div>
     </div>
   );
-  if (!device) return <div className="grid min-h-screen place-items-center text-muted-foreground">Loading…</div>;
+  if (!device) return (
+    <div className="grid min-h-screen place-items-center text-muted-foreground">
+      Fetching data…
+    </div>
+  );
 
   const statusUrl = `${window.location.origin}/status/${device.id}`;
+  const isCollected = device.status === "collected";
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,25 +53,37 @@ const Receipt = () => {
       </header>
       <main className="container max-w-md py-8">
         <div className="rounded-2xl border bg-card p-6 shadow-elegant text-center">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
-          <h1 className="mt-3 text-2xl font-bold">Device submitted</h1>
+          <CheckCircle2 className={`mx-auto h-10 w-10 ${isCollected ? "text-success" : "text-accent"}`} />
+          <h1 className="mt-3 text-2xl font-bold">
+            {isCollected ? "Device collected" : "Device submitted"}
+          </h1>
           <p className="text-sm text-muted-foreground">{device.owner_name}</p>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 text-left">
+          {/* Prominent Token */}
+          <div className="mt-6 rounded-xl border-2 border-dashed border-accent/50 bg-accent/5 p-5">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Token ID</div>
+            <div className="mt-1 text-4xl md:text-5xl font-extrabold tracking-[0.25em] text-accent">
+              {device.token_code}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 text-left">
             <div className="rounded-lg bg-secondary p-3">
-              <div className="text-xs text-muted-foreground">Token</div>
-              <div className="text-lg font-bold tracking-wider">{device.token_code}</div>
+              <div className="text-xs text-muted-foreground">Status</div>
+              <div className={`text-base font-bold ${isCollected ? "text-success" : "text-foreground"}`}>
+                {isCollected ? "Collected" : "Stored"}
+              </div>
             </div>
             <div className="rounded-lg bg-accent/10 p-3">
               <div className="text-xs text-accent">Slot</div>
-              <div className="text-lg font-bold tracking-wider text-accent">{device.slot_label}</div>
+              <div className="text-lg font-bold tracking-wider text-accent">{device.slot_label ?? "—"}</div>
             </div>
           </div>
 
           <div className="mt-6 inline-block rounded-2xl border-4 border-primary bg-white p-4">
-            <QRCodeCanvas value={device.id} size={180} level="H" />
+            <QRCodeCanvas value={device.id} size={200} level="H" />
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Show this QR at the counter for handover.</p>
+          <p className="mt-3 text-sm font-semibold text-foreground">Show this QR at collection counter</p>
 
           <Button asChild variant="hero" size="lg" className="mt-6 w-full">
             <Link to={`/status/${device.id}`}>Open status page <ArrowRight /></Link>
