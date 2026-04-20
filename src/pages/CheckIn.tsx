@@ -68,7 +68,6 @@ const CheckIn = () => {
       phone_model: phoneModel || null,
     } as any).select("id, token_code").single();
     if (error || !data) { toast.error(error?.message ?? "Check-in failed"); setLoading(false); return; }
-    await supabase.from("slots").update({ is_occupied: true }).eq("id", form.slot_id);
     toast.success(`Token ${data.token_code} issued`);
     nav(`/receipt/${data.id}`);
   };
