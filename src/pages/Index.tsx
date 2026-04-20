@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { QrCode, ScanLine, ShieldCheck, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FlowDemo } from "@/components/FlowDemo";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
@@ -45,6 +46,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Visual flow + queue simulation */}
+      <FlowDemo />
 
       {/* Features */}
       <section className="container py-20 md:py-28">
