@@ -12,19 +12,16 @@ interface Device {
 const Receipt = () => {
   const { id } = useParams();
   const [device, setDevice] = useState<Device | null>(null);
-
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     const raw = id.trim();
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw);
-    const q = isUuid
-      ? supabase.from("devices").select("id, token_code, owner_name, slot_label, status").eq("id", raw).maybeSingle()
-      : supabase.from("devices").select("id, token_code, owner_name, slot_label, status").eq("token_code", raw.toUpperCase()).maybeSingle();
-    q.then(({ data, error }) => {
-      console.log("[Receipt] lookup", { raw, data, error });
-      if (data) setDevice(data as Device); else setNotFound(true);
+    supabase.rpc("lookup_device", { _token: raw }).then(({ data, error }) => {
+      if (import.meta.env.DEV) console.debug("[Receipt] lookup status", { hasData: !!(data && data.length), error });
+      const row = Array.isArray(data) ? data[0] : null;
+      if (row) setDevice(row as Device);
+      else setNotFound(true);
     });
   }, [id]);
 
