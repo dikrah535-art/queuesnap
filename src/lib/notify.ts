@@ -39,7 +39,7 @@ export async function requestNotifyPermission(): Promise<NotificationPermission>
 export function pushNotify(title: string, body: string) {
   try {
     if ("Notification" in window && Notification.permission === "granted") {
-      const n = new Notification(title, { body, icon: "/favicon.ico", tag: "queuesafe" });
+      const n = new Notification(title, { body, icon: "/favicon.ico", tag: "queuesnap" });
       setTimeout(() => n.close(), 8000);
     }
   } catch (e) {

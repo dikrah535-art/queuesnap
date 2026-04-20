@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* QueueSafe design system — Apple-inspired: minimal, light, generous spacing. All HSL. */
+/* QueueSnap design system — Apple-inspired: minimal, light, generous spacing. All HSL. */
 
 @layer base {
   :root {
