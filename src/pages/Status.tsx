@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { Bell, BellRing, CheckCircle2, ListOrdered, ScanLine, Smartphone, X } from "lucide-react";
+import { ArrowLeft, Bell, BellRing, CheckCircle2, ListOrdered, ScanLine, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ const Status = () => {
   const [lookup, setLookup] = useState("");
   const [device, setDevice] = useState<Device | null>(null);
   const [acked, setAcked] = useState(false);
+  const [queuePos, setQueuePos] = useState<{ pos: number; total: number } | null>(null);
   const prevStatus = useRef<string | null>(null);
   const prevRinging = useRef<boolean>(false);
 
@@ -43,7 +44,18 @@ const Status = () => {
       { event: "UPDATE", schema: "public", table: "devices", filter: `id=eq.${paramId}` },
       (payload) => setDevice(payload.new as Device),
     ).subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    // Live queue position
+    const computePos = async () => {
+      const { data: me } = await supabase.from("devices").select("queue_time,status").eq("id", paramId).maybeSingle();
+      if (!me || me.status !== "in_queue" || !me.queue_time) { setQueuePos(null); return; }
+      const { data: ahead } = await supabase.from("devices").select("id", { count: "exact" }).eq("status", "in_queue").lte("queue_time", me.queue_time);
+      const { count: total } = await supabase.from("devices").select("id", { count: "exact", head: true }).eq("status", "in_queue");
+      setQueuePos({ pos: ahead?.length ?? 1, total: total ?? 0 });
+    };
+    computePos();
+    const qch = supabase.channel(`queue:${paramId}`).on("postgres_changes", { event: "*", schema: "public", table: "devices" }, computePos).subscribe();
+    return () => { supabase.removeChannel(channel); supabase.removeChannel(qch); };
   }, [paramId]);
 
   // Trigger chime + push when called or rung
