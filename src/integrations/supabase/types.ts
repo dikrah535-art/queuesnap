@@ -150,12 +150,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ack_ring: { Args: { _id: string; _token: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      join_queue: { Args: { _id: string; _token: string }; Returns: boolean }
+      lookup_device: {
+        Args: { _token: string }
+        Returns: {
+          id: string
+          owner_name: string
+          phone_model: string
+          ringing: boolean
+          slot_label: string
+          status: Database["public"]["Enums"]["device_status"]
+          token_code: string
+        }[]
       }
     }
     Enums: {

@@ -29,46 +29,36 @@ const Status = () => {
   const nav = useNavigate();
   const [lookup, setLookup] = useState("");
   const [device, setDevice] = useState<Device | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [acked, setAcked] = useState(false);
-  const [queuePos, setQueuePos] = useState<{ pos: number; total: number } | null>(null);
   const prevStatus = useRef<string | null>(null);
   const prevRinging = useRef<boolean>(false);
 
-  const [resolvedId, setResolvedId] = useState<string | null>(null);
-
+  // Fetch + poll via secure RPC (no PII broadcast over realtime)
   useEffect(() => {
     if (!paramId) return;
     const raw = paramId.trim();
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw);
-    const query = isUuid
-      ? supabase.from("devices").select("id,token_code,owner_name,slot_label,status,ringing").eq("id", raw).maybeSingle()
-      : supabase.from("devices").select("id,token_code,owner_name,slot_label,status,ringing").eq("token_code", raw.toUpperCase()).maybeSingle();
-    query.then(({ data, error }) => {
-      console.log("[Status] lookup", { raw, isUuid, data, error });
-      if (data) { setDevice(data as Device); setResolvedId((data as Device).id); }
-      else toast.error("Invalid or expired token");
-    });
-  }, [paramId]);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (!resolvedId) return;
-    const channel = supabase.channel(`device:${resolvedId}`).on(
-      "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "devices", filter: `id=eq.${resolvedId}` },
-      (payload) => setDevice(payload.new as Device),
-    ).subscribe();
-
-    const computePos = async () => {
-      const { data: me } = await supabase.from("devices").select("queue_time,status").eq("id", resolvedId).maybeSingle();
-      if (!me || me.status !== "in_queue" || !me.queue_time) { setQueuePos(null); return; }
-      const { data: ahead } = await supabase.from("devices").select("id", { count: "exact" }).eq("status", "in_queue").lte("queue_time", me.queue_time);
-      const { count: total } = await supabase.from("devices").select("id", { count: "exact", head: true }).eq("status", "in_queue");
-      setQueuePos({ pos: ahead?.length ?? 1, total: total ?? 0 });
+    const fetchOnce = async () => {
+      const { data, error } = await supabase.rpc("lookup_device", { _token: raw });
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : null;
+      if (import.meta.env.DEV) console.debug("[Status] lookup", { hasData: !!row, error });
+      if (row) {
+        setDevice(row as Device);
+        setNotFound(false);
+      } else if (!device) {
+        setNotFound(true);
+        toast.error("Invalid or expired token");
+      }
     };
-    computePos();
-    const qch = supabase.channel(`queue:${resolvedId}`).on("postgres_changes", { event: "*", schema: "public", table: "devices" }, computePos).subscribe();
-    return () => { supabase.removeChannel(channel); supabase.removeChannel(qch); };
-  }, [resolvedId]);
+
+    fetchOnce();
+    const iv = setInterval(fetchOnce, 4000);
+    return () => { cancelled = true; clearInterval(iv); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramId]);
 
   // Trigger chime + push when called or rung
   useEffect(() => {
@@ -96,14 +86,16 @@ const Status = () => {
 
   const joinQueue = async () => {
     if (!device) return;
-    const { error } = await supabase.from("devices").update({ status: "in_queue", queue_time: new Date().toISOString() }).eq("id", device.id);
-    if (error) toast.error(error.message); else toast.success("You're in the queue");
+    const { data, error } = await supabase.rpc("join_queue", { _id: device.id, _token: device.token_code });
+    if (error) { toast.error(error.message); return; }
+    if (data === true) toast.success("You're in the queue");
+    else toast.error("Could not join queue");
   };
 
   const ackRing = async () => {
     if (!device) return;
     setAcked(true);
-    await supabase.from("devices").update({ ringing: false }).eq("id", device.id);
+    await supabase.rpc("ack_ring", { _id: device.id, _token: device.token_code });
   };
 
   const enableNotifs = async () => {
@@ -131,11 +123,20 @@ const Status = () => {
     );
   }
 
+  if (notFound) return (
+    <div className="grid min-h-screen place-items-center bg-background p-6">
+      <div className="max-w-sm text-center space-y-4">
+        <h2 className="text-xl font-bold">Invalid or expired token</h2>
+        <p className="text-sm text-muted-foreground">Token <span className="font-mono">{paramId}</span> doesn't match any device.</p>
+        <Button asChild variant="outline" size="sm"><Link to="/status"><ArrowLeft /> Try another token</Link></Button>
+      </div>
+    </div>
+  );
+
   if (!device) return (
     <div className="grid min-h-screen place-items-center bg-background p-6">
       <div className="max-w-sm text-center space-y-4">
         <p className="text-muted-foreground">Looking up <span className="font-mono font-semibold">{paramId}</span>…</p>
-        <Button asChild variant="outline" size="sm"><Link to="/status"><ArrowLeft /> Try another token</Link></Button>
       </div>
     </div>
   );
@@ -212,14 +213,7 @@ const Status = () => {
                 <ListOrdered /> Join collection queue
               </Button>
             )}
-            {device.status === "in_queue" && queuePos && (
-              <div className="rounded-xl border-2 border-warning/40 bg-warning/10 p-4 text-center">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">Your position</p>
-                <p className="mt-1 text-4xl font-bold text-warning">#{queuePos.pos}<span className="text-base text-muted-foreground"> of {queuePos.total}</span></p>
-                <p className="mt-2 text-sm text-muted-foreground">Estimated wait ~{Math.max(1, (queuePos.pos - 1) * 2)} min</p>
-              </div>
-            )}
-            {device.status === "in_queue" && !queuePos && (
+            {device.status === "in_queue" && (
               <p className="text-center text-sm text-muted-foreground">You're in the queue. We'll chime when it's your turn.</p>
             )}
           </div>

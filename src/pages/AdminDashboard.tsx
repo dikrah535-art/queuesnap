@@ -35,6 +35,7 @@ const AdminDashboard = () => {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [scanning, setScanning] = useState(false);
   const [handover, setHandover] = useState<Device | null>(null);
+  const [handoverPhotoUrl, setHandoverPhotoUrl] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   const load = async () => {
@@ -48,12 +49,26 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     load();
-    const ch = supabase.channel("admin-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "slots" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    // Poll every 4s instead of realtime — devices table is no longer in the realtime
+    // publication, to avoid broadcasting customer PII to anonymous subscribers.
+    const iv = setInterval(load, 4000);
+    return () => { clearInterval(iv); };
   }, []);
+
+  // Generate a short-lived signed URL for the owner photo when handover dialog opens
+  useEffect(() => {
+    let cancelled = false;
+    setHandoverPhotoUrl(null);
+    if (!handover?.photo_url) return;
+    // Only render photos served from our own private storage bucket
+    const match = handover.photo_url.match(/\/storage\/v1\/object\/(?:public|sign)\/device-photos\/(.+?)(?:\?.*)?$/);
+    if (!match) return;
+    const path = match[1];
+    supabase.storage.from("device-photos").createSignedUrl(path, 60).then(({ data }) => {
+      if (!cancelled && data?.signedUrl) setHandoverPhotoUrl(data.signedUrl);
+    });
+    return () => { cancelled = true; };
+  }, [handover]);
 
   const queue = useMemo(() => devices.filter((d) => d.status === "in_queue").sort((a, b) => (a.queue_time ?? "").localeCompare(b.queue_time ?? "")), [devices]);
   const called = useMemo(() => devices.filter((d) => d.status === "called"), [devices]);
@@ -233,7 +248,7 @@ const AdminDashboard = () => {
                   <div className="text-2xl font-bold tracking-wider text-accent">{handover.slot_label}</div>
                 </div>
               </div>
-              {handover.photo_url && <img src={handover.photo_url} alt="Owner" className="w-full rounded-lg" />}
+              {handoverPhotoUrl && <img src={handoverPhotoUrl} alt="Owner" className="w-full rounded-lg" />}
               <Button variant="success" size="lg" className="w-full" onClick={confirmHandover}>
                 <CheckCircle2 /> Confirm handed over
               </Button>
