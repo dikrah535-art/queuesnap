@@ -47,6 +47,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Visual flow + queue simulation */}
+      <FlowDemo />
+
       {/* Features */}
       <section className="container py-20 md:py-28">
         <div className="mx-auto max-w-2xl text-center mb-14">
