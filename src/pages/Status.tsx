@@ -103,7 +103,7 @@ const Status = () => {
   if (!paramId) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b"><div className="container flex h-14 items-center gap-2"><Smartphone className="h-4 w-4 text-accent" /><span className="font-semibold">Check status</span></div></header>
+        <header className="border-b"><div className="container flex h-14 items-center gap-3"><Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft /> Home</Link></Button><div className="ml-auto flex items-center gap-2"><Smartphone className="h-4 w-4 text-accent" /><span className="font-semibold">Check status</span></div></div></header>
         <main className="container max-w-md py-8">
           <h1 className="text-2xl font-bold">Find your receipt</h1>
           <p className="mt-1 text-sm text-muted-foreground">Paste your receipt link or token ID below.</p>
@@ -139,9 +139,10 @@ const Status = () => {
       )}
       <header className="border-b">
         <div className="container flex h-14 items-center gap-2">
-          <Smartphone className="h-4 w-4 text-accent" /><span className="font-semibold">Status</span>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={enableNotifs}>
-            <Bell /> Enable alerts
+          <Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft /> Home</Link></Button>
+          <div className="mx-auto flex items-center gap-2"><Smartphone className="h-4 w-4 text-accent" /><span className="font-semibold">Status</span></div>
+          <Button variant="ghost" size="sm" onClick={enableNotifs}>
+            <Bell /> Alerts
           </Button>
         </div>
       </header>
@@ -192,7 +193,14 @@ const Status = () => {
                 <ListOrdered /> Join collection queue
               </Button>
             )}
-            {device.status === "in_queue" && (
+            {device.status === "in_queue" && queuePos && (
+              <div className="rounded-xl border-2 border-warning/40 bg-warning/10 p-4 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Your position</p>
+                <p className="mt-1 text-4xl font-bold text-warning">#{queuePos.pos}<span className="text-base text-muted-foreground"> of {queuePos.total}</span></p>
+                <p className="mt-2 text-sm text-muted-foreground">Estimated wait ~{Math.max(1, (queuePos.pos - 1) * 2)} min</p>
+              </div>
+            )}
+            {device.status === "in_queue" && !queuePos && (
               <p className="text-center text-sm text-muted-foreground">You're in the queue. We'll chime when it's your turn.</p>
             )}
           </div>
