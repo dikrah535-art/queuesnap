@@ -32,7 +32,9 @@ export const QrScanner = ({ onResult, onError }: Props) => {
       .catch((err) => onError?.(String(err)));
 
     return () => {
-      scanner.stop().catch(() => {}).finally(() => scanner.clear().catch(() => {}));
+      const s = scannerRef.current;
+      if (!s) return;
+      Promise.resolve(s.stop()).catch(() => {}).finally(() => { try { s.clear(); } catch {} });
     };
   }, [onResult, onError]);
 
