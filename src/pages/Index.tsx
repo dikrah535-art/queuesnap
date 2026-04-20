@@ -15,7 +15,7 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="text-lg font-semibold tracking-tight">QueueSafe</Link>
+          <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
           <nav className="flex items-center gap-1">
             <Button asChild variant="ghost" size="sm"><Link to="/status">Status</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/admin/login">Admin</Link></Button>
@@ -70,7 +70,7 @@ const Index = () => {
       </section>
 
       <footer className="border-t border-border/60 py-10 text-center text-sm text-muted-foreground">
-        QueueSafe · Smart Device Submission System
+        QueueSnap · Smart Device Submission System
       </footer>
     </div>
   );
