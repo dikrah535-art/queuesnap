@@ -212,18 +212,9 @@ const Status = () => {
             </div>
           )}
 
-          {device.status === "collected" && (
-            <div className="mt-5 rounded-xl border-2 border-success bg-success/10 p-4 text-center">
-              <CheckCircle2 className="mx-auto h-8 w-8 text-success" />
-              <p className="mt-2 font-bold text-success">Device handed over. Thank you!</p>
-            </div>
-          )}
-
-          {(device.status === "checked_in" || device.status === "in_queue" || device.status === "called") && (
-            <div className="mt-5 inline-block rounded-2xl border-4 border-primary bg-white p-3 mx-auto block w-fit">
-              <QRCodeCanvas value={device.id} size={160} level="H" />
-            </div>
-          )}
+          <div className="mt-5 inline-block rounded-2xl border-4 border-primary bg-white p-3 mx-auto block w-fit">
+            <QRCodeCanvas value={device.id} size={160} level="H" />
+          </div>
 
           <div className="mt-5">
             {device.status === "checked_in" && (
