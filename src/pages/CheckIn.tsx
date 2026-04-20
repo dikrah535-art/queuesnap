@@ -1,19 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Smartphone } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
+
+const PHONE_MODELS = [
+  "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone SE",
+  "Samsung Galaxy S25 Ultra", "Samsung Galaxy S25", "Samsung Galaxy S24", "Samsung Galaxy S23", "Samsung Galaxy A55", "Samsung Galaxy A35", "Samsung Galaxy A15",
+  "OnePlus 13", "OnePlus 12", "OnePlus Nord 4", "OnePlus Nord CE 4",
+  "Google Pixel 9 Pro", "Google Pixel 9", "Google Pixel 8a", "Google Pixel 8",
+  "Xiaomi 15", "Xiaomi 14", "Redmi Note 14 Pro", "Redmi Note 13",
+  "Realme GT 7 Pro", "Realme 13 Pro",
+  "Vivo X200 Pro", "Vivo V40",
+  "OPPO Find X8", "OPPO Reno 12",
+  "Motorola Edge 50", "Motorola Razr 50",
+  "Nothing Phone (2a)", "Nothing Phone (2)",
+  "Other",
+];
 
 const schema = z.object({
   owner_name: z.string().trim().min(2, "Name is too short").max(80),
   owner_id_text: z.string().trim().max(40).optional(),
   owner_email: z.string().trim().email().max(120).optional().or(z.literal("")),
   slot_id: z.string().uuid("Choose a slot"),
+  phone_model: z.string().trim().min(1, "Select a phone model").max(120),
 });
 
 interface Slot { id: string; label: string; is_occupied: boolean; }
@@ -22,7 +40,12 @@ const CheckIn = () => {
   const nav = useNavigate();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSelection, setModelSelection] = useState("");
+  const [customModel, setCustomModel] = useState("");
   const [form, setForm] = useState({ owner_name: "", owner_id_text: "", owner_email: "", slot_id: "" });
+
+  const phoneModel = modelSelection === "Other" ? customModel.trim() : modelSelection;
 
   useEffect(() => {
     supabase.from("slots").select("*").eq("is_occupied", false).order("label").then(({ data }) => {
