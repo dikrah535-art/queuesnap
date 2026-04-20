@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Bell, BellRing, CheckCircle2, Grid3x3, ListOrdered, LogOut,
-  PhoneCall, ScanLine, Smartphone, Users,
+  ArrowLeft, Bell, BellRing, CheckCircle2, Grid3x3, ListOrdered, LogOut,
+  PhoneCall, ScanLine, Search, Smartphone, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ const AdminDashboard = () => {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [scanning, setScanning] = useState(false);
   const [handover, setHandover] = useState<Device | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     const [{ data: d }, { data: s }] = await Promise.all([
@@ -95,10 +97,11 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-20">
         <div className="container flex h-14 items-center gap-2">
+          <Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft /> Home</Link></Button>
           <Smartphone className="h-5 w-5 text-accent" />
-          <span className="font-bold">SyncPhone · Admin</span>
+          <span className="font-bold hidden sm:inline">SyncPhone · Admin</span>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="accent" size="sm" onClick={() => setScanning(true)}><ScanLine /> Scan receipt</Button>
+            <Button variant="accent" size="sm" onClick={() => setScanning(true)}><ScanLine /> Scan</Button>
             <Button variant="ghost" size="sm" onClick={signOut}><LogOut /></Button>
           </div>
         </div>
@@ -153,14 +156,27 @@ const AdminDashboard = () => {
             </section>
           </TabsContent>
 
-          <TabsContent value="all">
+          <TabsContent value="all" className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by token or owner name…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="overflow-hidden rounded-xl border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-secondary text-xs uppercase tracking-wide text-muted-foreground">
                   <tr><th className="p-3 text-left">Token</th><th className="p-3 text-left">Owner</th><th className="p-3 text-left">Slot</th><th className="p-3 text-left">Status</th><th className="p-3 text-left">Check-in</th></tr>
                 </thead>
                 <tbody>
-                  {devices.map((d) => (
+                  {devices.filter((d) => {
+                    const q = search.trim().toLowerCase();
+                    if (!q) return true;
+                    return d.token_code.toLowerCase().includes(q) || d.owner_name.toLowerCase().includes(q);
+                  }).map((d) => (
                     <tr key={d.id} className="border-t">
                       <td className="p-3 font-mono font-semibold">{d.token_code}</td>
                       <td className="p-3">{d.owner_name}</td>

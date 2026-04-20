@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { ArrowRight, CheckCircle2, Smartphone } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,8 +26,9 @@ const Receipt = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container flex h-14 items-center gap-2">
-          <Smartphone className="h-4 w-4 text-accent" /><span className="font-semibold">Digital receipt</span>
+        <div className="container flex h-14 items-center gap-3">
+          <Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft /> Home</Link></Button>
+          <div className="ml-auto flex items-center gap-2"><Smartphone className="h-4 w-4 text-accent" /><span className="font-semibold">Digital receipt</span></div>
         </div>
       </header>
       <main className="container max-w-md py-8">
