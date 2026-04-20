@@ -14,16 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      devices: {
+        Row: {
+          called_time: string | null
+          check_in_time: string
+          collection_time: string | null
+          created_at: string
+          id: string
+          owner_email: string | null
+          owner_id_text: string | null
+          owner_name: string
+          owner_user_id: string | null
+          photo_url: string | null
+          queue_time: string | null
+          ringing: boolean
+          slot_id: string | null
+          slot_label: string | null
+          status: Database["public"]["Enums"]["device_status"]
+          token_code: string
+        }
+        Insert: {
+          called_time?: string | null
+          check_in_time?: string
+          collection_time?: string | null
+          created_at?: string
+          id?: string
+          owner_email?: string | null
+          owner_id_text?: string | null
+          owner_name: string
+          owner_user_id?: string | null
+          photo_url?: string | null
+          queue_time?: string | null
+          ringing?: boolean
+          slot_id?: string | null
+          slot_label?: string | null
+          status?: Database["public"]["Enums"]["device_status"]
+          token_code?: string
+        }
+        Update: {
+          called_time?: string | null
+          check_in_time?: string
+          collection_time?: string | null
+          created_at?: string
+          id?: string
+          owner_email?: string | null
+          owner_id_text?: string | null
+          owner_name?: string
+          owner_user_id?: string | null
+          photo_url?: string | null
+          queue_time?: string | null
+          ringing?: boolean
+          slot_id?: string | null
+          slot_label?: string | null
+          status?: Database["public"]["Enums"]["device_status"]
+          token_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      slots: {
+        Row: {
+          created_at: string
+          id: string
+          is_occupied: boolean
+          label: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_occupied?: boolean
+          label: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_occupied?: boolean
+          label?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      device_status: "checked_in" | "in_queue" | "called" | "collected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +284,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      device_status: ["checked_in", "in_queue", "called", "collected"],
+    },
   },
 } as const
