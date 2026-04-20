@@ -1,0 +1,1 @@
+ALTER TABLE public.devices ADD COLUMN phone_model text;

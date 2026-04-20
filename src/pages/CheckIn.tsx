@@ -1,19 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Smartphone } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
+
+const PHONE_MODELS = [
+  "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15", "iPhone 14", "iPhone 13", "iPhone 12", "iPhone SE",
+  "Samsung Galaxy S25 Ultra", "Samsung Galaxy S25", "Samsung Galaxy S24", "Samsung Galaxy S23", "Samsung Galaxy A55", "Samsung Galaxy A35", "Samsung Galaxy A15",
+  "OnePlus 13", "OnePlus 12", "OnePlus Nord 4", "OnePlus Nord CE 4",
+  "Google Pixel 9 Pro", "Google Pixel 9", "Google Pixel 8a", "Google Pixel 8",
+  "Xiaomi 15", "Xiaomi 14", "Redmi Note 14 Pro", "Redmi Note 13",
+  "Realme GT 7 Pro", "Realme 13 Pro",
+  "Vivo X200 Pro", "Vivo V40",
+  "OPPO Find X8", "OPPO Reno 12",
+  "Motorola Edge 50", "Motorola Razr 50",
+  "Nothing Phone (2a)", "Nothing Phone (2)",
+  "Other",
+];
 
 const schema = z.object({
   owner_name: z.string().trim().min(2, "Name is too short").max(80),
   owner_id_text: z.string().trim().max(40).optional(),
   owner_email: z.string().trim().email().max(120).optional().or(z.literal("")),
   slot_id: z.string().uuid("Choose a slot"),
+  phone_model: z.string().trim().min(1, "Select a phone model").max(120),
 });
 
 interface Slot { id: string; label: string; is_occupied: boolean; }
@@ -22,7 +40,12 @@ const CheckIn = () => {
   const nav = useNavigate();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSelection, setModelSelection] = useState("");
+  const [customModel, setCustomModel] = useState("");
   const [form, setForm] = useState({ owner_name: "", owner_id_text: "", owner_email: "", slot_id: "" });
+
+  const phoneModel = modelSelection === "Other" ? customModel.trim() : modelSelection;
 
   useEffect(() => {
     supabase.from("slots").select("*").eq("is_occupied", false).order("label").then(({ data }) => {
@@ -32,7 +55,7 @@ const CheckIn = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = schema.safeParse(form);
+    const parsed = schema.safeParse({ ...form, phone_model: phoneModel });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
     const slot = slots.find((s) => s.id === form.slot_id);
@@ -42,7 +65,8 @@ const CheckIn = () => {
       owner_email: form.owner_email?.trim() || null,
       slot_id: form.slot_id,
       slot_label: slot?.label,
-    }).select("id, token_code").single();
+      phone_model: phoneModel || null,
+    } as any).select("id, token_code").single();
     if (error || !data) { toast.error(error?.message ?? "Check-in failed"); setLoading(false); return; }
     await supabase.from("slots").update({ is_occupied: true }).eq("id", form.slot_id);
     toast.success(`Token ${data.token_code} issued`);
@@ -65,7 +89,7 @@ const CheckIn = () => {
         <form onSubmit={submit} className="mt-6 space-y-4 rounded-2xl border bg-card p-5 shadow-card">
           <div>
             <Label htmlFor="name">Full name *</Label>
-            <Input id="name" value={form.owner_name} onChange={(e) => setForm({ ...form, owner_name: e.target.value })} maxLength={80} required />
+            <Input id="name" value={form.owner_name} onChange={(e) => setForm({ ...form, owner_name: e.target.value })} maxLength={80} required autoFocus />
           </div>
           <div>
             <Label htmlFor="idn">ID / Reg no.</Label>
@@ -75,6 +99,39 @@ const CheckIn = () => {
             <Label htmlFor="email">Email (optional, for backup link)</Label>
             <Input id="email" type="email" value={form.owner_email} onChange={(e) => setForm({ ...form, owner_email: e.target.value })} maxLength={120} />
           </div>
+
+          {/* Phone model picker */}
+          <div>
+            <Label>Phone model *</Label>
+            <Popover open={modelOpen} onOpenChange={setModelOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" aria-expanded={modelOpen} className="w-full justify-between font-normal">
+                  {modelSelection || "Select phone model…"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search models…" />
+                  <CommandList>
+                    <CommandEmpty>No match found</CommandEmpty>
+                    <CommandGroup>
+                      {PHONE_MODELS.map((m) => (
+                        <CommandItem key={m} value={m} onSelect={(v) => { setModelSelection(v); setModelOpen(false); }}>
+                          <Check className={cn("mr-2 h-4 w-4", modelSelection === m ? "opacity-100" : "opacity-0")} />
+                          {m}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {modelSelection === "Other" && (
+              <Input className="mt-2" placeholder="Enter your phone model" value={customModel} onChange={(e) => setCustomModel(e.target.value)} maxLength={120} autoFocus />
+            )}
+          </div>
+
           <div>
             <Label>Slot *</Label>
             <Select value={form.slot_id} onValueChange={(v) => setForm({ ...form, slot_id: v })}>

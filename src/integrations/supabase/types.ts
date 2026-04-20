@@ -25,6 +25,7 @@ export type Database = {
           owner_id_text: string | null
           owner_name: string
           owner_user_id: string | null
+          phone_model: string | null
           photo_url: string | null
           queue_time: string | null
           ringing: boolean
@@ -43,6 +44,7 @@ export type Database = {
           owner_id_text?: string | null
           owner_name: string
           owner_user_id?: string | null
+          phone_model?: string | null
           photo_url?: string | null
           queue_time?: string | null
           ringing?: boolean
@@ -61,6 +63,7 @@ export type Database = {
           owner_id_text?: string | null
           owner_name?: string
           owner_user_id?: string | null
+          phone_model?: string | null
           photo_url?: string | null
           queue_time?: string | null
           ringing?: boolean
