@@ -55,7 +55,7 @@ const CheckIn = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = schema.safeParse(form);
+    const parsed = schema.safeParse({ ...form, phone_model: phoneModel });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
     const slot = slots.find((s) => s.id === form.slot_id);
@@ -65,7 +65,8 @@ const CheckIn = () => {
       owner_email: form.owner_email?.trim() || null,
       slot_id: form.slot_id,
       slot_label: slot?.label,
-    }).select("id, token_code").single();
+      phone_model: phoneModel || null,
+    } as any).select("id, token_code").single();
     if (error || !data) { toast.error(error?.message ?? "Check-in failed"); setLoading(false); return; }
     await supabase.from("slots").update({ is_occupied: true }).eq("id", form.slot_id);
     toast.success(`Token ${data.token_code} issued`);
@@ -88,7 +89,7 @@ const CheckIn = () => {
         <form onSubmit={submit} className="mt-6 space-y-4 rounded-2xl border bg-card p-5 shadow-card">
           <div>
             <Label htmlFor="name">Full name *</Label>
-            <Input id="name" value={form.owner_name} onChange={(e) => setForm({ ...form, owner_name: e.target.value })} maxLength={80} required />
+            <Input id="name" value={form.owner_name} onChange={(e) => setForm({ ...form, owner_name: e.target.value })} maxLength={80} required autoFocus />
           </div>
           <div>
             <Label htmlFor="idn">ID / Reg no.</Label>
@@ -98,6 +99,39 @@ const CheckIn = () => {
             <Label htmlFor="email">Email (optional, for backup link)</Label>
             <Input id="email" type="email" value={form.owner_email} onChange={(e) => setForm({ ...form, owner_email: e.target.value })} maxLength={120} />
           </div>
+
+          {/* Phone model picker */}
+          <div>
+            <Label>Phone model *</Label>
+            <Popover open={modelOpen} onOpenChange={setModelOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" aria-expanded={modelOpen} className="w-full justify-between font-normal">
+                  {modelSelection || "Select phone model…"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search models…" />
+                  <CommandList>
+                    <CommandEmpty>No match found</CommandEmpty>
+                    <CommandGroup>
+                      {PHONE_MODELS.map((m) => (
+                        <CommandItem key={m} value={m} onSelect={(v) => { setModelSelection(v); setModelOpen(false); }}>
+                          <Check className={cn("mr-2 h-4 w-4", modelSelection === m ? "opacity-100" : "opacity-0")} />
+                          {m}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {modelSelection === "Other" && (
+              <Input className="mt-2" placeholder="Enter your phone model" value={customModel} onChange={(e) => setCustomModel(e.target.value)} maxLength={120} autoFocus />
+            )}
+          </div>
+
           <div>
             <Label>Slot *</Label>
             <Select value={form.slot_id} onValueChange={(v) => setForm({ ...form, slot_id: v })}>
