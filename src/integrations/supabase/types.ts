@@ -171,6 +171,7 @@ export type Database = {
           token_code: string
         }[]
       }
+      queue_position: { Args: { _id: string; _token: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"

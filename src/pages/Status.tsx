@@ -31,6 +31,7 @@ const Status = () => {
   const [device, setDevice] = useState<Device | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [acked, setAcked] = useState(false);
+  const [queuePos, setQueuePos] = useState<number | null>(null);
   const prevStatus = useRef<string | null>(null);
   const prevRinging = useRef<boolean>(false);
 
@@ -48,6 +49,12 @@ const Status = () => {
       if (row) {
         setDevice(row as Device);
         setNotFound(false);
+        if ((row as Device).status === "in_queue") {
+          const { data: pos } = await supabase.rpc("queue_position", { _id: (row as Device).id, _token: (row as Device).token_code });
+          if (!cancelled) setQueuePos(typeof pos === "number" ? pos : null);
+        } else {
+          setQueuePos(null);
+        }
       } else if (!device) {
         setNotFound(true);
         toast.error("Invalid or expired token");
@@ -136,7 +143,18 @@ const Status = () => {
   if (!device) return (
     <div className="grid min-h-screen place-items-center bg-background p-6">
       <div className="max-w-sm text-center space-y-4">
-        <p className="text-muted-foreground">Looking up <span className="font-mono font-semibold">{paramId}</span>…</p>
+        <p className="text-muted-foreground">Searching for <span className="font-mono font-semibold">{paramId}</span>…</p>
+      </div>
+    </div>
+  );
+
+  if (device.status === "collected") return (
+    <div className="grid min-h-screen place-items-center bg-background p-6">
+      <div className="max-w-sm text-center space-y-4 rounded-2xl border bg-card p-6 shadow-card">
+        <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
+        <h2 className="text-xl font-bold">This device has already been collected</h2>
+        <p className="text-sm text-muted-foreground">Token <span className="font-mono">{device.token_code}</span> · {device.owner_name}</p>
+        <Button asChild variant="outline" size="sm"><Link to="/"><ArrowLeft /> Home</Link></Button>
       </div>
     </div>
   );
@@ -194,18 +212,9 @@ const Status = () => {
             </div>
           )}
 
-          {device.status === "collected" && (
-            <div className="mt-5 rounded-xl border-2 border-success bg-success/10 p-4 text-center">
-              <CheckCircle2 className="mx-auto h-8 w-8 text-success" />
-              <p className="mt-2 font-bold text-success">Device handed over. Thank you!</p>
-            </div>
-          )}
-
-          {(device.status === "checked_in" || device.status === "in_queue" || device.status === "called") && (
-            <div className="mt-5 inline-block rounded-2xl border-4 border-primary bg-white p-3 mx-auto block w-fit">
-              <QRCodeCanvas value={device.id} size={160} level="H" />
-            </div>
-          )}
+          <div className="mt-5 inline-block rounded-2xl border-4 border-primary bg-white p-3 mx-auto block w-fit">
+            <QRCodeCanvas value={device.id} size={160} level="H" />
+          </div>
 
           <div className="mt-5">
             {device.status === "checked_in" && (
@@ -214,7 +223,17 @@ const Status = () => {
               </Button>
             )}
             {device.status === "in_queue" && (
-              <p className="text-center text-sm text-muted-foreground">You're in the queue. We'll chime when it's your turn.</p>
+              <div className="rounded-xl border-2 border-warning/40 bg-warning/10 p-4 text-center">
+                <p className="text-sm font-semibold text-warning-foreground">Please wait for your turn</p>
+                {queuePos && queuePos > 0 ? (
+                  <p className="mt-2 text-3xl font-extrabold text-warning">
+                    #{queuePos}
+                    <span className="ml-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">in queue</span>
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">We'll chime when it's your turn.</p>
+                )}
+              </div>
             )}
           </div>
         </div>
