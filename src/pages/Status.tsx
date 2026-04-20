@@ -34,29 +34,41 @@ const Status = () => {
   const prevStatus = useRef<string | null>(null);
   const prevRinging = useRef<boolean>(false);
 
+  const [resolvedId, setResolvedId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!paramId) return;
-    supabase.from("devices").select("id,token_code,owner_name,slot_label,status,ringing").eq("id", paramId).maybeSingle()
-      .then(({ data }) => { if (data) setDevice(data as Device); else toast.error("Receipt not found"); });
+    const raw = paramId.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw);
+    const query = isUuid
+      ? supabase.from("devices").select("id,token_code,owner_name,slot_label,status,ringing").eq("id", raw).maybeSingle()
+      : supabase.from("devices").select("id,token_code,owner_name,slot_label,status,ringing").eq("token_code", raw.toUpperCase()).maybeSingle();
+    query.then(({ data, error }) => {
+      console.log("[Status] lookup", { raw, isUuid, data, error });
+      if (data) { setDevice(data as Device); setResolvedId((data as Device).id); }
+      else toast.error("Invalid or expired token");
+    });
+  }, [paramId]);
 
-    const channel = supabase.channel(`device:${paramId}`).on(
+  useEffect(() => {
+    if (!resolvedId) return;
+    const channel = supabase.channel(`device:${resolvedId}`).on(
       "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "devices", filter: `id=eq.${paramId}` },
+      { event: "UPDATE", schema: "public", table: "devices", filter: `id=eq.${resolvedId}` },
       (payload) => setDevice(payload.new as Device),
     ).subscribe();
 
-    // Live queue position
     const computePos = async () => {
-      const { data: me } = await supabase.from("devices").select("queue_time,status").eq("id", paramId).maybeSingle();
+      const { data: me } = await supabase.from("devices").select("queue_time,status").eq("id", resolvedId).maybeSingle();
       if (!me || me.status !== "in_queue" || !me.queue_time) { setQueuePos(null); return; }
       const { data: ahead } = await supabase.from("devices").select("id", { count: "exact" }).eq("status", "in_queue").lte("queue_time", me.queue_time);
       const { count: total } = await supabase.from("devices").select("id", { count: "exact", head: true }).eq("status", "in_queue");
       setQueuePos({ pos: ahead?.length ?? 1, total: total ?? 0 });
     };
     computePos();
-    const qch = supabase.channel(`queue:${paramId}`).on("postgres_changes", { event: "*", schema: "public", table: "devices" }, computePos).subscribe();
+    const qch = supabase.channel(`queue:${resolvedId}`).on("postgres_changes", { event: "*", schema: "public", table: "devices" }, computePos).subscribe();
     return () => { supabase.removeChannel(channel); supabase.removeChannel(qch); };
-  }, [paramId]);
+  }, [resolvedId]);
 
   // Trigger chime + push when called or rung
   useEffect(() => {
@@ -119,7 +131,14 @@ const Status = () => {
     );
   }
 
-  if (!device) return <div className="grid min-h-screen place-items-center text-muted-foreground">Loading…</div>;
+  if (!device) return (
+    <div className="grid min-h-screen place-items-center bg-background p-6">
+      <div className="max-w-sm text-center space-y-4">
+        <p className="text-muted-foreground">Looking up <span className="font-mono font-semibold">{paramId}</span>…</p>
+        <Button asChild variant="outline" size="sm"><Link to="/status"><ArrowLeft /> Try another token</Link></Button>
+      </div>
+    </div>
+  );
 
   const showRingingOverlay = device.ringing && !acked;
 
