@@ -27,21 +27,15 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email, password,
           options: { emailRedirectTo: `${window.location.origin}/admin` },
         });
         if (error) throw error;
-        if (data.user) {
-          // First admin bootstrap: if no admin exists yet, grant this user admin
-          const { count } = await supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
-          if ((count ?? 0) === 0) {
-            await supabase.from("user_roles").insert({ user_id: data.user.id, role: "admin" });
-            toast.success("Admin account created");
-          } else {
-            toast.success("Account created — ask an existing admin to grant access");
-          }
-        }
+        // Auto-confirm is on; sign in immediately to establish session
+        const { error: siErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (siErr) throw siErr;
+        toast.success("Account created");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
