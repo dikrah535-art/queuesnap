@@ -13,12 +13,30 @@ const Receipt = () => {
   const { id } = useParams();
   const [device, setDevice] = useState<Device | null>(null);
 
+  const [notFound, setNotFound] = useState(false);
+
   useEffect(() => {
     if (!id) return;
-    supabase.from("devices").select("id, token_code, owner_name, slot_label, status").eq("id", id).single()
-      .then(({ data }) => setDevice(data as Device | null));
+    const raw = id.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw);
+    const q = isUuid
+      ? supabase.from("devices").select("id, token_code, owner_name, slot_label, status").eq("id", raw).maybeSingle()
+      : supabase.from("devices").select("id, token_code, owner_name, slot_label, status").eq("token_code", raw.toUpperCase()).maybeSingle();
+    q.then(({ data, error }) => {
+      console.log("[Receipt] lookup", { raw, data, error });
+      if (data) setDevice(data as Device); else setNotFound(true);
+    });
   }, [id]);
 
+  if (notFound) return (
+    <div className="grid min-h-screen place-items-center bg-background p-6">
+      <div className="max-w-sm text-center space-y-4">
+        <h2 className="text-xl font-bold">Receipt not found</h2>
+        <p className="text-sm text-muted-foreground">Token <span className="font-mono">{id}</span> doesn't match any device.</p>
+        <Button asChild variant="hero"><Link to="/checkin"><ArrowLeft /> Back to check-in</Link></Button>
+      </div>
+    </div>
+  );
   if (!device) return <div className="grid min-h-screen place-items-center text-muted-foreground">Loading…</div>;
 
   const statusUrl = `${window.location.origin}/status/${device.id}`;
