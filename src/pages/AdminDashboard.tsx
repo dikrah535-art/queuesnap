@@ -114,7 +114,7 @@ const AdminDashboard = () => {
         <div className="container flex h-14 items-center gap-2">
           <Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft /> Home</Link></Button>
           <Smartphone className="h-5 w-5 text-accent" />
-          <span className="font-bold hidden sm:inline">SyncPhone · Admin</span>
+          <span className="font-bold hidden sm:inline">QueueSafe · Admin</span>
           <div className="ml-auto flex items-center gap-2">
             <Button variant="accent" size="sm" onClick={() => setScanning(true)}><ScanLine /> Scan</Button>
             <Button variant="ghost" size="sm" onClick={signOut}><LogOut /></Button>

@@ -18,7 +18,7 @@ const Index = () => {
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-gradient shadow-glow">
               <Smartphone className="h-5 w-5 text-accent-foreground" />
             </div>
-            <span className="text-lg font-bold tracking-tight">SyncPhone</span>
+            <span className="text-lg font-bold tracking-tight">QueueSafe</span>
           </div>
           <nav className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm"><Link to="/admin/login">Admin</Link></Button>
@@ -69,7 +69,7 @@ const Index = () => {
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        SyncPhone · High-trust device management
+        QueueSafe · Smart Device Submission System
       </footer>
     </div>
   );
