@@ -151,6 +151,13 @@ export type Database = {
     }
     Functions: {
       ack_ring: { Args: { _id: string; _token: string }; Returns: boolean }
+      assign_next_slot: {
+        Args: never
+        Returns: {
+          slot_id: string
+          slot_label: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

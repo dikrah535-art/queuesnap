@@ -101,9 +101,26 @@ const AdminDashboard = () => {
       status: "collected", collection_time: new Date().toISOString(), ringing: false,
     }).eq("id", handover.id);
     if (error) { toast.error(error.message); return; }
-    if (handover.slot_id) await supabase.from("slots").update({ is_occupied: false }).eq("id", handover.slot_id);
+    // Slot is freed automatically by the sync_slot_occupancy trigger
     toast.success(`Handed over to ${handover.owner_name}`);
     setHandover(null);
+  };
+
+  // Manually free a slot: also marks any active device on that slot as collected.
+  const freeSlot = async (slot: Slot) => {
+    if (!confirm(`Free ${slot.label}? Any active device on this slot will be marked as collected.`)) return;
+    // Mark active device(s) as collected — trigger will free the slot.
+    const { error: devErr } = await supabase
+      .from("devices")
+      .update({ status: "collected", collection_time: new Date().toISOString(), ringing: false })
+      .eq("slot_id", slot.id)
+      .neq("status", "collected");
+    if (devErr) { toast.error(devErr.message); return; }
+    // Also force-free in case no device was attached
+    const { error: slotErr } = await supabase.from("slots").update({ is_occupied: false }).eq("id", slot.id);
+    if (slotErr) { toast.error(slotErr.message); return; }
+    toast.success(`${slot.label} is now free`);
+    load();
   };
 
   const signOut = async () => { await supabase.auth.signOut(); nav("/admin/login"); };
@@ -207,14 +224,37 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="slots">
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 md:grid-cols-10">
-              {slots.map((s) => (
-                <div key={s.id} className={`rounded-lg border-2 p-3 text-center font-mono font-semibold ${s.is_occupied ? "border-accent bg-accent/10 text-accent" : "border-success/40 bg-success/5 text-success"}`}>
-                  {s.label}
-                  <div className="mt-1 text-[10px] uppercase tracking-wider opacity-70">{s.is_occupied ? "occupied" : "free"}</div>
-                </div>
-              ))}
-            </div>
+            {slots.length === 0 ? (
+              <EmptyState text="No slots yet — slots are created automatically as users check in." />
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                {slots.map((s) => (
+                  <div
+                    key={s.id}
+                    className={`flex flex-col rounded-lg border-2 p-3 text-center font-mono font-semibold ${
+                      s.is_occupied
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-success/40 bg-success/5 text-success"
+                    }`}
+                  >
+                    <div>{s.label}</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-wider opacity-70">
+                      {s.is_occupied ? "occupied" : "free"}
+                    </div>
+                    {s.is_occupied && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 h-7 text-[11px]"
+                        onClick={() => freeSlot(s)}
+                      >
+                        Free slot
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>

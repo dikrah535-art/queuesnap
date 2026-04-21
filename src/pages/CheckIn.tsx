@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, ChevronsUpDown, Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,45 +29,44 @@ const schema = z.object({
   owner_name: z.string().trim().min(2, "Name is too short").max(80),
   owner_id_text: z.string().trim().max(40).optional(),
   owner_email: z.string().trim().email().max(120).optional().or(z.literal("")),
-  slot_id: z.string().uuid("Choose a slot"),
   phone_model: z.string().trim().min(1, "Select a phone model").max(120),
 });
 
-interface Slot { id: string; label: string; is_occupied: boolean; }
-
 const CheckIn = () => {
   const nav = useNavigate();
-  const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
   const [modelSelection, setModelSelection] = useState("");
   const [customModel, setCustomModel] = useState("");
-  const [form, setForm] = useState({ owner_name: "", owner_id_text: "", owner_email: "", slot_id: "" });
+  const [form, setForm] = useState({ owner_name: "", owner_id_text: "", owner_email: "" });
 
   const phoneModel = modelSelection === "Other" ? customModel.trim() : modelSelection;
-
-  useEffect(() => {
-    supabase.from("slots").select("*").eq("is_occupied", false).order("label").then(({ data }) => {
-      setSlots((data as Slot[]) ?? []);
-    });
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ ...form, phone_model: phoneModel });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
-    const slot = slots.find((s) => s.id === form.slot_id);
+
+    // Auto-assign the lowest free slot (or create the next one)
+    const { data: slotRows, error: slotErr } = await supabase.rpc("assign_next_slot");
+    const slot = Array.isArray(slotRows) ? slotRows[0] : null;
+    if (slotErr || !slot) {
+      toast.error(slotErr?.message ?? "Could not assign a slot");
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase.from("devices").insert({
       owner_name: form.owner_name.trim(),
       owner_id_text: form.owner_id_text?.trim() || null,
       owner_email: form.owner_email?.trim() || null,
-      slot_id: form.slot_id,
-      slot_label: slot?.label,
+      slot_id: slot.slot_id,
+      slot_label: slot.slot_label,
       phone_model: phoneModel || null,
     } as any).select("id, token_code").single();
     if (error || !data) { toast.error(error?.message ?? "Check-in failed"); setLoading(false); return; }
-    toast.success(`Token ${data.token_code} issued`);
+    toast.success(`Token ${data.token_code} · ${slot.slot_label}`);
     nav(`/receipt/${data.id}`);
   };
 
@@ -84,7 +82,7 @@ const CheckIn = () => {
       </header>
       <main className="container max-w-md py-8">
         <h1 className="text-2xl font-bold">Submit your device</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Fill in your details and pick an available slot. You'll get a digital receipt.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Fill in your details. A slot will be assigned automatically and you'll get a digital receipt.</p>
         <form onSubmit={submit} className="mt-6 space-y-4 rounded-2xl border bg-card p-5 shadow-card">
           <div>
             <Label htmlFor="name">Full name *</Label>
@@ -131,14 +129,8 @@ const CheckIn = () => {
             )}
           </div>
 
-          <div>
-            <Label>Slot *</Label>
-            <Select value={form.slot_id} onValueChange={(v) => setForm({ ...form, slot_id: v })}>
-              <SelectTrigger><SelectValue placeholder={slots.length ? "Choose a free slot" : "No slots available"} /></SelectTrigger>
-              <SelectContent>
-                {slots.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="rounded-lg border border-dashed bg-secondary/40 p-3 text-xs text-muted-foreground">
+            A slot will be assigned automatically when you submit.
           </div>
           <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />} Generate token & QR
