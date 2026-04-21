@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { playChime, pushNotify, requestNotifyPermission } from "@/lib/notify";
+import { playChime, pushNotify, requestNotifyPermission, startAlert, stopAlert } from "@/lib/notify";
 
 interface Device {
   id: string; token_code: string; owner_name: string; slot_label: string | null;
@@ -67,24 +67,27 @@ const Status = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramId]);
 
-  // Trigger chime + push when called or rung
+  // Trigger looping alert + push when called or rung
   useEffect(() => {
     if (!device) return;
     const becameCalled = prevStatus.current && prevStatus.current !== "called" && device.status === "called";
     const becameRinging = !prevRinging.current && device.ringing;
     if (becameCalled) {
-      playChime();
-      pushNotify("Your turn!", `Token ${device.token_code} — proceed to counter for slot ${device.slot_label}`);
+      startAlert();
+      pushNotify("Your device is ready for collection", `Token ${device.token_code} — proceed to slot ${device.slot_label}`);
       setAcked(false);
     }
     if (becameRinging) {
-      playChime();
-      pushNotify("Device ringing", `Admin is locating token ${device.token_code}`);
+      startAlert();
+      pushNotify("Your device is ready for collection", `Admin is locating token ${device.token_code}`);
       setAcked(false);
     }
     prevStatus.current = device.status;
     prevRinging.current = device.ringing;
   }, [device]);
+
+  // Stop alert on unmount
+  useEffect(() => () => stopAlert(), []);
 
   const goLookup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,13 +105,14 @@ const Status = () => {
   const ackRing = async () => {
     if (!device) return;
     setAcked(true);
+    stopAlert();
     await supabase.rpc("ack_ring", { _id: device.id, _token: device.token_code });
   };
 
   const enableNotifs = async () => {
     const p = await requestNotifyPermission();
-    if (p === "granted") toast.success("Notifications enabled");
-    else toast.error("Permission denied");
+    if (p === "granted") toast.success("You will be notified when your device is ready");
+    else toast.error("Notifications blocked — we'll still ring you in-app");
   };
 
   if (!paramId) {
