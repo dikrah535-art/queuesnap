@@ -86,6 +86,18 @@ const AdminDashboard = () => {
     toast.success(`Ringing ${d.token_code}`);
   };
 
+  const returnDevice = async (d: Device) => {
+    if (d.status === "collected") return;
+    if (!confirm(`Mark ${d.owner_name}'s device (${d.token_code}) as returned?`)) return;
+    const { error } = await supabase
+      .from("devices")
+      .update({ status: "collected", collection_time: new Date().toISOString(), ringing: false })
+      .eq("id", d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Device returned successfully");
+    load();
+  };
+
   const handleScan = async (text: string) => {
     setScanning(false);
     const id = text.trim();
