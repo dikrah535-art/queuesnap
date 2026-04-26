@@ -9,9 +9,11 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
     const check = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { if (mounted) setState("no"); return; }
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin").maybeSingle();
+      // Use getUser() to cryptographically verify the JWT against the auth server,
+      // not just read it from localStorage (which getSession does).
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) { if (mounted) setState("no"); return; }
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
       if (!mounted) return;
       setState(data ? "ok" : "no");
     };
