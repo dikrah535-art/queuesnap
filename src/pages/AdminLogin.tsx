@@ -68,6 +68,22 @@ const AdminLogin = () => {
           <button type="button" className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>
             {mode === "signin" ? "First admin? Create account" : "Have an account? Sign in"}
           </button>
+          {mode === "signin" && (
+            <button
+              type="button"
+              className="mt-2 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+              onClick={async () => {
+                if (!email) return toast.error("Enter your email first");
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                });
+                if (error) toast.error(error.message);
+                else toast.success("Password reset email sent. Check your inbox.");
+              }}
+            >
+              Forgot password?
+            </button>
+          )}
         </div>
       </div>
     </div>
