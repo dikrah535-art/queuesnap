@@ -312,18 +312,28 @@ const AdminDashboard = () => {
   );
 };
 
-const DeviceRow = ({ d, index, onRing }: { d: Device; index?: number; onRing: () => void }) => (
-  <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-card">
-    <div className="flex items-center gap-3 min-w-0">
-      {index && <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/15 font-bold text-warning">{index}</div>}
-      <div className="min-w-0">
-        <div className="truncate font-semibold">{d.owner_name}</div>
-        <div className="text-xs text-muted-foreground">Token {d.token_code} · Slot <span className="text-accent font-semibold">{d.slot_label}</span></div>
+const DeviceRow = ({ d, index, onRing, onReturn }: { d: Device; index?: number; onRing: () => void; onReturn: () => void }) => {
+  const returned = d.status === "collected";
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-card">
+      <div className="flex items-center gap-3 min-w-0">
+        {index && <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/15 font-bold text-warning">{index}</div>}
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{d.owner_name}</div>
+          <div className="text-xs text-muted-foreground">Token {d.token_code} · Slot <span className="text-accent font-semibold">{d.slot_label}</span></div>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onRing} disabled={returned}><Bell className="h-4 w-4" /> Ring</Button>
+        {returned ? (
+          <span className="rounded-full bg-success px-3 py-1 text-xs font-semibold text-success-foreground">Returned</span>
+        ) : (
+          <Button variant="success" size="sm" onClick={onReturn}><PackageCheck className="h-4 w-4" /> Return</Button>
+        )}
       </div>
     </div>
-    <Button variant="outline" size="sm" onClick={onRing}><Bell className="h-4 w-4" /> Ring</Button>
-  </div>
-);
+  );
+};
 
 const EmptyState = ({ text }: { text: string }) => (
   <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{text}</div>
