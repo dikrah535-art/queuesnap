@@ -185,7 +185,7 @@ const AdminDashboard = () => {
               <section>
                 <h3 className="mb-2 text-sm font-semibold text-accent">Currently called</h3>
                 <div className="grid gap-2 md:grid-cols-2">
-                  {called.map((d) => <DeviceRow key={d.id} d={d} onRing={() => ring(d)} />)}
+                  {called.map((d) => <DeviceRow key={d.id} d={d} onRing={() => ring(d)} onReturn={() => returnDevice(d)} />)}
                 </div>
               </section>
             )}
