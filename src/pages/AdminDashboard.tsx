@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
@@ -37,6 +41,8 @@ const AdminDashboard = () => {
   const [handover, setHandover] = useState<Device | null>(null);
   const [handoverPhotoUrl, setHandoverPhotoUrl] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [returnTarget, setReturnTarget] = useState<Device | null>(null);
+  const [returning, setReturning] = useState(false);
 
   const load = async () => {
     const [{ data: d }, { data: s }] = await Promise.all([
@@ -86,15 +92,25 @@ const AdminDashboard = () => {
     toast.success(`Ringing ${d.token_code}`);
   };
 
-  const returnDevice = async (d: Device) => {
+  const requestReturn = (d: Device) => {
     if (d.status === "collected") return;
-    if (!confirm(`Mark ${d.owner_name}'s device (${d.token_code}) as returned?`)) return;
+    setReturnTarget(d);
+  };
+
+  const confirmReturn = async () => {
+    if (!returnTarget) return;
+    setReturning(true);
     const { error } = await supabase
       .from("devices")
       .update({ status: "collected", collection_time: new Date().toISOString(), ringing: false })
-      .eq("id", d.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Device returned successfully");
+      .eq("id", returnTarget.id);
+    setReturning(false);
+    if (error) {
+      toast.error("Failed to return device. Try again.");
+      return;
+    }
+    toast.success("Device returned successfully", { duration: 2500 });
+    setReturnTarget(null);
     load();
   };
 
@@ -185,7 +201,7 @@ const AdminDashboard = () => {
               <section>
                 <h3 className="mb-2 text-sm font-semibold text-accent">Currently called</h3>
                 <div className="grid gap-2 md:grid-cols-2">
-                  {called.map((d) => <DeviceRow key={d.id} d={d} onRing={() => ring(d)} onReturn={() => returnDevice(d)} />)}
+                  {called.map((d) => <DeviceRow key={d.id} d={d} onRing={() => ring(d)} onReturn={() => requestReturn(d)} />)}
                 </div>
               </section>
             )}
@@ -194,7 +210,7 @@ const AdminDashboard = () => {
               <h3 className="mb-2 text-sm font-semibold">Waiting queue ({queue.length})</h3>
               {queue.length === 0 ? <EmptyState text="No one is in the queue right now." /> : (
                 <div className="grid gap-2 md:grid-cols-2">
-                  {queue.map((d, i) => <DeviceRow key={d.id} d={d} index={i + 1} onRing={() => ring(d)} onReturn={() => returnDevice(d)} />)}
+                  {queue.map((d, i) => <DeviceRow key={d.id} d={d} index={i + 1} onRing={() => ring(d)} onReturn={() => requestReturn(d)} />)}
                 </div>
               )}
             </section>
@@ -308,6 +324,36 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Return confirmation */}
+      <AlertDialog open={!!returnTarget} onOpenChange={(o) => !o && !returning && setReturnTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Return Device</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to return this device?
+              {returnTarget && (
+                <span className="mt-3 block rounded-lg bg-secondary p-3 text-foreground">
+                  <span className="block text-sm font-semibold">{returnTarget.owner_name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Token <span className="font-mono font-semibold">{returnTarget.token_code}</span> · Slot <span className="font-semibold text-accent">{returnTarget.slot_label}</span>
+                  </span>
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={returning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmReturn(); }}
+              disabled={returning}
+              className="bg-success text-success-foreground hover:bg-success/90"
+            >
+              {returning ? "Returning…" : "Confirm Return"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
