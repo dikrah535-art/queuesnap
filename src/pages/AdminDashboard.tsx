@@ -41,6 +41,8 @@ const AdminDashboard = () => {
   const [handover, setHandover] = useState<Device | null>(null);
   const [handoverPhotoUrl, setHandoverPhotoUrl] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [returnTarget, setReturnTarget] = useState<Device | null>(null);
+  const [returning, setReturning] = useState(false);
 
   const load = async () => {
     const [{ data: d }, { data: s }] = await Promise.all([
