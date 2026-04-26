@@ -92,15 +92,25 @@ const AdminDashboard = () => {
     toast.success(`Ringing ${d.token_code}`);
   };
 
-  const returnDevice = async (d: Device) => {
+  const requestReturn = (d: Device) => {
     if (d.status === "collected") return;
-    if (!confirm(`Mark ${d.owner_name}'s device (${d.token_code}) as returned?`)) return;
+    setReturnTarget(d);
+  };
+
+  const confirmReturn = async () => {
+    if (!returnTarget) return;
+    setReturning(true);
     const { error } = await supabase
       .from("devices")
       .update({ status: "collected", collection_time: new Date().toISOString(), ringing: false })
-      .eq("id", d.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Device returned successfully");
+      .eq("id", returnTarget.id);
+    setReturning(false);
+    if (error) {
+      toast.error("Failed to return device. Try again.");
+      return;
+    }
+    toast.success("Device returned successfully", { duration: 2500 });
+    setReturnTarget(null);
     load();
   };
 
