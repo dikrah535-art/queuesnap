@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Bell, BellRing, CheckCircle2, Grid3x3, ListOrdered, LogOut,
-  PhoneCall, ScanLine, Search, Smartphone, Users,
+  PackageCheck, PhoneCall, ScanLine, Search, Smartphone, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +84,18 @@ const AdminDashboard = () => {
   const ring = async (d: Device) => {
     await supabase.from("devices").update({ ringing: true }).eq("id", d.id);
     toast.success(`Ringing ${d.token_code}`);
+  };
+
+  const returnDevice = async (d: Device) => {
+    if (d.status === "collected") return;
+    if (!confirm(`Mark ${d.owner_name}'s device (${d.token_code}) as returned?`)) return;
+    const { error } = await supabase
+      .from("devices")
+      .update({ status: "collected", collection_time: new Date().toISOString(), ringing: false })
+      .eq("id", d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Device returned successfully");
+    load();
   };
 
   const handleScan = async (text: string) => {
@@ -173,7 +185,7 @@ const AdminDashboard = () => {
               <section>
                 <h3 className="mb-2 text-sm font-semibold text-accent">Currently called</h3>
                 <div className="grid gap-2 md:grid-cols-2">
-                  {called.map((d) => <DeviceRow key={d.id} d={d} onRing={() => ring(d)} />)}
+                  {called.map((d) => <DeviceRow key={d.id} d={d} onRing={() => ring(d)} onReturn={() => returnDevice(d)} />)}
                 </div>
               </section>
             )}
@@ -182,7 +194,7 @@ const AdminDashboard = () => {
               <h3 className="mb-2 text-sm font-semibold">Waiting queue ({queue.length})</h3>
               {queue.length === 0 ? <EmptyState text="No one is in the queue right now." /> : (
                 <div className="grid gap-2 md:grid-cols-2">
-                  {queue.map((d, i) => <DeviceRow key={d.id} d={d} index={i + 1} onRing={() => ring(d)} />)}
+                  {queue.map((d, i) => <DeviceRow key={d.id} d={d} index={i + 1} onRing={() => ring(d)} onReturn={() => returnDevice(d)} />)}
                 </div>
               )}
             </section>
@@ -300,18 +312,28 @@ const AdminDashboard = () => {
   );
 };
 
-const DeviceRow = ({ d, index, onRing }: { d: Device; index?: number; onRing: () => void }) => (
-  <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-card">
-    <div className="flex items-center gap-3 min-w-0">
-      {index && <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/15 font-bold text-warning">{index}</div>}
-      <div className="min-w-0">
-        <div className="truncate font-semibold">{d.owner_name}</div>
-        <div className="text-xs text-muted-foreground">Token {d.token_code} · Slot <span className="text-accent font-semibold">{d.slot_label}</span></div>
+const DeviceRow = ({ d, index, onRing, onReturn }: { d: Device; index?: number; onRing: () => void; onReturn: () => void }) => {
+  const returned = d.status === "collected";
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-card">
+      <div className="flex items-center gap-3 min-w-0">
+        {index && <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/15 font-bold text-warning">{index}</div>}
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{d.owner_name}</div>
+          <div className="text-xs text-muted-foreground">Token {d.token_code} · Slot <span className="text-accent font-semibold">{d.slot_label}</span></div>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onRing} disabled={returned}><Bell className="h-4 w-4" /> Ring</Button>
+        {returned ? (
+          <span className="rounded-full bg-success px-3 py-1 text-xs font-semibold text-success-foreground">Returned</span>
+        ) : (
+          <Button variant="success" size="sm" onClick={onReturn}><PackageCheck className="h-4 w-4" /> Return</Button>
+        )}
       </div>
     </div>
-    <Button variant="outline" size="sm" onClick={onRing}><Bell className="h-4 w-4" /> Ring</Button>
-  </div>
-);
+  );
+};
 
 const EmptyState = ({ text }: { text: string }) => (
   <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{text}</div>
