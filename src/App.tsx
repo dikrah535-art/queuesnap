@@ -10,6 +10,7 @@ import Receipt from "./pages/Receipt";
 import Status from "./pages/Status";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import Collection from "./pages/Collection";
 import ResetPassword from "./pages/ResetPassword";
 import { AdminGuard } from "./components/AdminGuard";
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+          <Route path="/admin/collection" element={<AdminGuard><Collection /></AdminGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

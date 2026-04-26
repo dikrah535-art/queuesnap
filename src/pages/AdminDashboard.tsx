@@ -161,6 +161,7 @@ const AdminDashboard = () => {
           <Smartphone className="h-5 w-5 text-accent" />
           <span className="font-bold hidden sm:inline">QueueSnap · Admin Panel</span>
           <div className="ml-auto flex items-center gap-2">
+            <Button asChild variant="outline" size="sm"><Link to="/admin/collection"><PackageCheck /> Collection</Link></Button>
             <Button variant="accent" size="sm" onClick={() => setScanning(true)}><ScanLine /> Scan</Button>
             <Button variant="ghost" size="sm" onClick={signOut}><LogOut /></Button>
           </div>
