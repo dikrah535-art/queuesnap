@@ -324,6 +324,36 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Return confirmation */}
+      <AlertDialog open={!!returnTarget} onOpenChange={(o) => !o && !returning && setReturnTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Return Device</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to return this device?
+              {returnTarget && (
+                <span className="mt-3 block rounded-lg bg-secondary p-3 text-foreground">
+                  <span className="block text-sm font-semibold">{returnTarget.owner_name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Token <span className="font-mono font-semibold">{returnTarget.token_code}</span> · Slot <span className="font-semibold text-accent">{returnTarget.slot_label}</span>
+                  </span>
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={returning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmReturn(); }}
+              disabled={returning}
+              className="bg-success text-success-foreground hover:bg-success/90"
+            >
+              {returning ? "Returning…" : "Confirm Return"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
