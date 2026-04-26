@@ -28,6 +28,7 @@ QueueSnap digitizes the entire flow:
 - Admins manage **batch-wise processing**
 - Real-time status tracking for users
 
+This project simulates a real-world device submission and tracking system used in high-traffic environments like colleges and examination centers.
 ---
 
 ## ✨ Features
@@ -65,9 +66,9 @@ QueueSnap digitizes the entire flow:
 ## 📸 UI Preview
 <img width="1349" height="597" alt="Screenshot 2026-04-26 102834" src="https://github.com/user-attachments/assets/cf83625b-69c4-480b-b037-fcc1c8a5217f" />
 <img width="1345" height="597" alt="Screenshot 2026-04-26 171546" src="https://github.com/user-attachments/assets/2ca4f2d4-44a4-480a-b437-ed3cd779780f" />
-<img width="1348" height="597" alt="Screenshot 2026-04-26 173530" src="https://github.com/user-attachments/assets/e2efeb56-59e4-473b-bd14-7b2a16c53a61" />
-<img width="1348" height="600" alt="Screenshot 2026-04-26 174942" src="https://github.com/user-attachments/assets/abe66909-18b1-4282-8d25-b87ca4f7e021" />
+<img width="1360" height="596" alt="Screenshot 2026-04-26 224530" src="https://github.com/user-attachments/assets/cc1ac08c-eb46-476a-8d3f-0a7470f2a9e8" />
 <img width="1362" height="594" alt="Screenshot 2026-04-26 181105" src="https://github.com/user-attachments/assets/c864cef1-6e52-4a7f-8504-3b85cac183ad" />
+<img width="1348" height="600" alt="Screenshot 2026-04-26 174942" src="https://github.com/user-attachments/assets/abe66909-18b1-4282-8d25-b87ca4f7e021" />
 <img width="1354" height="592" alt="Screenshot 2026-04-26 181853" src="https://github.com/user-attachments/assets/2c78a42e-b6ca-491d-aa0d-1590cc86f86b" />
 <img width="1088" height="528" alt="Screenshot 2026-04-26 180426" src="https://github.com/user-attachments/assets/98eee449-5c0c-4b2f-97c1-d9a0ef25af59" />
 
