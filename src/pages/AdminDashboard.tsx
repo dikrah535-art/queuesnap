@@ -194,7 +194,7 @@ const AdminDashboard = () => {
               <h3 className="mb-2 text-sm font-semibold">Waiting queue ({queue.length})</h3>
               {queue.length === 0 ? <EmptyState text="No one is in the queue right now." /> : (
                 <div className="grid gap-2 md:grid-cols-2">
-                  {queue.map((d, i) => <DeviceRow key={d.id} d={d} index={i + 1} onRing={() => ring(d)} />)}
+                  {queue.map((d, i) => <DeviceRow key={d.id} d={d} index={i + 1} onRing={() => ring(d)} onReturn={() => returnDevice(d)} />)}
                 </div>
               )}
             </section>
