@@ -10,6 +10,7 @@ import Receipt from "./pages/Receipt";
 import Status from "./pages/Status";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import { AdminGuard } from "./components/AdminGuard";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/status" element={<Status />} />
           <Route path="/status/:id" element={<Status />} />
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
