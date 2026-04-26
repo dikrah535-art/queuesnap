@@ -57,17 +57,28 @@ const CheckIn = () => {
       return;
     }
 
-    const { data, error } = await supabase.from("devices").insert({
+    // Generate the token client-side so we can navigate without needing
+    // SELECT-back permission (anon has no SELECT policy on devices for safety).
+    const tokenCode = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+      .map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+
+    const { error } = await supabase.from("devices").insert({
       owner_name: form.owner_name.trim(),
       owner_id_text: form.owner_id_text?.trim() || null,
       owner_email: form.owner_email?.trim() || null,
       slot_id: slot.slot_id,
       slot_label: slot.slot_label,
       phone_model: phoneModel || null,
-    } as any).select("id, token_code").single();
-    if (error || !data) { toast.error(error?.message ?? "Check-in failed"); setLoading(false); return; }
-    toast.success(`Token ${data.token_code} · ${slot.slot_label}`);
-    nav(`/receipt/${data.id}`);
+      token_code: tokenCode,
+    } as any);
+    if (error) { toast.error(error.message ?? "Check-in failed"); setLoading(false); return; }
+
+    // Look up the inserted device via SECURITY DEFINER RPC (bypasses RLS safely)
+    const { data: rows } = await supabase.rpc("lookup_device", { _token: tokenCode });
+    const created = Array.isArray(rows) ? rows[0] : null;
+    if (!created) { toast.error("Check-in saved but lookup failed"); setLoading(false); return; }
+    toast.success(`Token ${created.token_code} · ${slot.slot_label}`);
+    nav(`/receipt/${created.id}`);
   };
 
   return (
