@@ -12,6 +12,8 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Collection from "./pages/Collection";
 import ResetPassword from "./pages/ResetPassword";
+import AdminDemoLogin from "./pages/AdminDemoLogin";
+import AdminDemoDashboard from "./pages/AdminDemoDashboard";
 import { AdminGuard } from "./components/AdminGuard";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
           <Route path="/admin/collection" element={<AdminGuard><Collection /></AdminGuard>} />
+          <Route path="/admin-demo" element={<AdminDemoLogin />} />
+          <Route path="/admin-dashboard" element={<AdminDemoDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
