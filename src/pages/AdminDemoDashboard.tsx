@@ -64,8 +64,34 @@ const AdminDemoDashboard = () => {
   };
 
   const scanQr = () => {
-    toast("📷 QR scanner simulated — token captured", { duration: 2000 });
-    setToken("QS102");
+    const target =
+      devices.find((d) => d.status === "active") ?? devices[0];
+    if (!target) {
+      toast.error("No devices available to scan");
+      return;
+    }
+    setToken(target.deviceId);
+    setScanned(target);
+    toast("📷 QR scanned — device detected", { duration: 1800 });
+  };
+
+  const ringScanned = () => {
+    if (!scanned) return;
+    toast.success("Ringing device...");
+    setTimeout(() => toast("📞 Phone is ringing...", { duration: 2500 }), 600);
+  };
+
+  const returnScanned = () => {
+    if (!scanned) return;
+    setDevices((d) =>
+      d.map((x) =>
+        x.id === scanned.id
+          ? { ...x, status: "returned", collectedAt: formatTime() }
+          : x
+      )
+    );
+    toast.success("Device successfully returned");
+    setTimeout(() => setScanned(null), 2200);
   };
 
   const confirmReturn = () => {
