@@ -176,6 +176,47 @@ const AdminDemoDashboard = () => {
           </Card>
         </div>
 
+        {/* Scan result panel */}
+        {scanned && (
+          <Card className="p-6 shadow-card animate-scale-in border-primary/40">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-primary font-semibold">
+                    Device Detected
+                  </div>
+                  <div className="font-semibold text-lg leading-tight">{scanned.name}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{scanned.deviceId}</div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setScanned(null)}
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button onClick={ringScanned} className="w-full">
+                <Bell /> Ring Device
+              </Button>
+              <Button
+                variant="outline"
+                onClick={returnScanned}
+                disabled={scanned.status === "returned"}
+                className="w-full"
+              >
+                <PackageCheck /> {scanned.status === "returned" ? "Returned" : "Return Device"}
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Device cards */}
         <div>
           <h2 className="text-lg font-semibold mb-3">Devices</h2>
