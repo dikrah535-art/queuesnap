@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { isRecoveryMode } from "@/lib/recovery";
 
 export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
-  const [state, setState] = useState<"loading" | "ok" | "no">("loading");
+  const [state, setState] = useState<"loading" | "ok" | "no" | "recovery">("loading");
 
   useEffect(() => {
     let mounted = true;
     const check = async () => {
+      // Sessions created by a password-recovery link must NOT grant admin
+      // access — the user has not re-authenticated, they have only proven
+      // control of the email inbox.
+      if (isRecoveryMode()) { if (mounted) setState("recovery"); return; }
       // Use getUser() to cryptographically verify the JWT against the auth server,
       // not just read it from localStorage (which getSession does).
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -23,6 +28,7 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (state === "loading") return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-accent" /></div>;
+  if (state === "recovery") return <Navigate to="/reset-password" replace />;
   if (state === "no") return <Navigate to="/admin/login" replace />;
   return <>{children}</>;
 };
