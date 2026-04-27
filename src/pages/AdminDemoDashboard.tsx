@@ -29,7 +29,6 @@ const SAMPLE_NAMES = ["Rahul", "Priya", "Jordan", "Sam", "Mei", "Alex", "Neha", 
 
 const initialDevices: DemoDevice[] = [
   { id: "1", name: "Agresh Ji", deviceId: "QS101", status: "active", collectedAt: "10:32 AM" },
-  { id: "2", name: "Mohini", deviceId: "QS102", status: "active", collectedAt: "10:45 AM" },
   { id: "3", name: "Rahul", deviceId: "QS103", status: "returned", collectedAt: "09:15 AM" },
 ];
 
