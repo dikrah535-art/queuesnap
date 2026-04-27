@@ -39,6 +39,7 @@ const AdminDemoDashboard = () => {
   const [devices, setDevices] = useState<DemoDevice[]>(initialDevices);
   const [token, setToken] = useState("");
   const [returnTarget, setReturnTarget] = useState<DemoDevice | null>(null);
+  const [scanned, setScanned] = useState<DemoDevice | null>(null);
 
   const addUser = () => {
     const name = SAMPLE_NAMES[Math.floor(Math.random() * SAMPLE_NAMES.length)];
