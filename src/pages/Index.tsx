@@ -47,6 +47,9 @@ const Index = () => {
               <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[200px]">
                 <Link to="/checkin">Get Started <ArrowRight /></Link>
               </Button>
+              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                <Link to="/admin-demo"><ShieldCheck className="mr-1" /> Try Admin Demo</Link>
+              </Button>
               <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto text-primary hover:bg-primary/5">
                 <Link to="/status"><ScanLine className="mr-1" /> Check status</Link>
               </Button>

@@ -14,6 +14,7 @@ const SAMPLE = [
   { name: "Jordan", token: "C8M4" },
   { name: "Sam", token: "D5N1" },
   { name: "Mei", token: "E2Q6" },
+  { name: "Mohini", token: "F9R3" },
 ];
 
 export const FlowDemo = () => {
