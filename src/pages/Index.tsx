@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Building2, GraduationCap, QrCode, ScanLine, ShieldCheck, Sparkles, Zap, Users } from "lucide-react";
+import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlowDemo } from "@/components/FlowDemo";
+import { Typewriter } from "@/components/Typewriter";
+import { Reveal } from "@/components/Reveal";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
@@ -40,8 +42,14 @@ const Index = () => {
             <h1 className="mt-6 text-6xl md:text-8xl font-semibold tracking-tight text-foreground">
               QueueSnap
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-lg md:text-xl text-muted-foreground leading-relaxed">
-              Streamline device submission and eliminate counter congestion with token-based check-in and QR verification.
+            <p className="mx-auto mt-5 max-w-xl text-lg md:text-xl text-muted-foreground leading-relaxed min-h-[3.5rem]">
+              <Typewriter
+                words={[
+                  "Skip the line. Save your time.",
+                  "Join queues digitally.",
+                  "Real-time queue tracking.",
+                ]}
+              />
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[200px]">
