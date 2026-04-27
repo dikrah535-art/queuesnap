@@ -72,8 +72,42 @@ const Index = () => {
       </div>
 
       {/* Trust / Use case */}
+      {/* Problem & Vision */}
+      <section className="container py-20 md:py-28">
+        <Reveal className="mx-auto max-w-2xl text-center mb-14">
+          <span className="inline-block text-xs font-medium uppercase tracking-wider text-primary">Why QueueSnap</span>
+          <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">The problem we're solving.</h2>
+          <p className="mt-3 text-muted-foreground">Waiting in line is a tax on your day. We think it's time to remove it.</p>
+        </Reveal>
+        <div className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto">
+          <Reveal>
+            <div className="h-full rounded-2xl border border-border/60 bg-card p-8 shadow-card transition-smooth hover:shadow-elegant">
+              <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                <Clock className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold">The problem</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                People lose hours every week standing in queues at shops, clinics, and service counters. There's no visibility into wait times, no way to plan ahead, and no efficient system to manage the crowd.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="h-full rounded-2xl border border-border/60 bg-card p-8 shadow-card transition-smooth hover:shadow-elegant">
+              <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Lightbulb className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold">Our vision</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                QueueSnap removes physical waiting altogether. Join a queue digitally, track your position in real time, and arrive exactly when it's your turn — so your time stays yours.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Trust / Use case */}
       <section className="container pb-8 md:pb-12">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-border/60 bg-card p-8 md:p-12 text-center shadow-card animate-fade-in">
+        <Reveal className="mx-auto max-w-3xl rounded-3xl border border-border/60 bg-card p-8 md:p-12 text-center shadow-card">
           <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Built for colleges, exams, and offices
           </h3>
@@ -88,28 +122,26 @@ const Index = () => {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Features */}
       <section className="container py-20 md:py-28">
-        <div className="mx-auto max-w-2xl text-center mb-14 animate-fade-in">
+        <Reveal className="mx-auto max-w-2xl text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Designed for calm.</h2>
           <p className="mt-3 text-muted-foreground">Three simple ideas. Zero counter chaos.</p>
-        </div>
+        </Reveal>
         <div className="grid gap-6 md:grid-cols-3">
           {features.map((f, i) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-border/60 bg-card p-8 shadow-card transition-smooth hover:shadow-elegant animate-fade-in"
-              style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}
-            >
-              <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <f.icon className="h-5 w-5" />
+            <Reveal key={f.title} delay={i * 80}>
+              <div className="h-full rounded-2xl border border-border/60 bg-card p-8 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-0.5">
+                <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <f.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-semibold">{f.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
-              <h3 className="text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
