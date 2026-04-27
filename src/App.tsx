@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDemoLogin from "./pages/AdminDemoLogin";
 import AdminDemoDashboard from "./pages/AdminDemoDashboard";
 import { AdminGuard } from "./components/AdminGuard";
+import { RecoveryWatcher } from "./components/RecoveryWatcher";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RecoveryWatcher />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/checkin" element={<CheckIn />} />
