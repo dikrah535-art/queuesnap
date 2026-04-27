@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2, KeyRound, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -85,8 +85,8 @@ const ResetPassword = () => {
             <p className="text-sm text-muted-foreground">Open this page from the password reset link in your email.</p>
           ) : (
             <form onSubmit={submit} className="space-y-4">
-              <div><Label htmlFor="np">New password</Label><Input id="np" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" /></div>
-              <div><Label htmlFor="cp">Confirm password</Label><Input id="cp" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} autoComplete="new-password" /></div>
+              <div><Label htmlFor="np">New password</Label><PasswordInput id="np" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" /></div>
+              <div><Label htmlFor="cp">Confirm password</Label><PasswordInput id="cp" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} autoComplete="new-password" /></div>
               <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="animate-spin" />} Update password
               </Button>
