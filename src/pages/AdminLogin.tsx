@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isRecoveryMode } from "@/lib/recovery";
 
 const AdminLogin = () => {
   const nav = useNavigate();
@@ -15,6 +16,9 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // If the user landed here while a password-recovery session is active,
+    // do NOT auto-redirect into the admin area — send them to reset first.
+    if (isRecoveryMode()) { nav("/reset-password", { replace: true }); return; }
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return;
       const { data: role } = await supabase.from("user_roles").select("role").eq("user_id", data.session.user.id).eq("role", "admin").maybeSingle();
