@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Bell, PackageCheck, Plus, QrCode, ScanLine, Smartphone, UserPlus } from "lucide-react";
+import { Bell, CheckCircle2, PackageCheck, Plus, QrCode, ScanLine, Smartphone, UserPlus, X } from "lucide-react";
 
 type DemoDevice = {
   id: string;
