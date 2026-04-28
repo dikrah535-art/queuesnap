@@ -2,13 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type WorkspaceRole = "owner" | "admin" | "member";
 export type LobbyStatus = "open" | "closed";
-export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled";
+export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected";
 
 export interface Workspace {
   id: string;
   name: string;
   description: string | null;
   owner_id: string;
+  default_capacity: number;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +31,8 @@ export interface QueueEntry {
   lobby_id: string;
   user_id: string | null;
   name: string;
+  phone: string | null;
+  device_type: string | null;
   position: number;
   status: QueueEntryStatus;
   created_at: string;
@@ -88,12 +91,18 @@ export async function fetchMyWorkspaces() {
   return (data ?? []) as Workspace[];
 }
 
-export async function createWorkspace(name: string, description: string) {
+export async function createWorkspace(name: string, description: string, defaultCapacity = 50) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in");
+  const cap = Math.max(1, Math.min(10000, Math.floor(defaultCapacity || 50)));
   const { data, error } = await supabase
     .from("workspaces")
-    .insert({ name: name.trim(), description: description.trim() || null, owner_id: user.id })
+    .insert({
+      name: name.trim(),
+      description: description.trim() || null,
+      owner_id: user.id,
+      default_capacity: cap,
+    } as never)
     .select()
     .single();
   if (error) throw error;
@@ -156,24 +165,39 @@ export async function fetchLobby(id: string) {
   return data as Lobby;
 }
 
-export async function fetchQueueEntries(lobbyId: string) {
-  const { data, error } = await supabase
+export async function fetchQueueEntries(
+  lobbyId: string,
+  opts: { includeAll?: boolean } = {},
+) {
+  let q = supabase
     .from("queue_entries")
     .select("*")
-    .eq("lobby_id", lobbyId)
-    .in("status", ["waiting", "serving"])
-    .order("position", { ascending: true });
+    .eq("lobby_id", lobbyId);
+  if (!opts.includeAll) q = q.in("status", ["waiting", "serving"]);
+  const { data, error } = await q.order("position", { ascending: true });
   if (error) throw error;
   return (data ?? []) as QueueEntry[];
 }
 
-export async function joinLobby(lobbyId: string, name: string) {
+export async function joinLobby(
+  lobbyId: string,
+  name: string,
+  extra: { phone?: string; deviceType?: string } = {},
+) {
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase.rpc("join_lobby", {
     _lobby_id: lobbyId,
     _name: name,
     _user_id: user?.id ?? null,
-  });
+    _phone: extra.phone ?? null,
+    _device_type: extra.deviceType ?? null,
+  } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function markCollected(entryId: string) {
+  const { data, error } = await supabase.rpc("mark_collected", { _entry_id: entryId } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
 }
