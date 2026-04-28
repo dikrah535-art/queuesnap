@@ -16,6 +16,7 @@ const Workspaces = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [capacity, setCapacity] = useState(50);
   const [creating, setCreating] = useState(false);
 
   const reload = async () => {
@@ -26,11 +27,12 @@ const Workspaces = () => {
 
   const submit = async () => {
     if (name.trim().length < 2) { toast.error("Name must be at least 2 characters"); return; }
+    if (capacity < 1) { toast.error("Capacity must be at least 1"); return; }
     setCreating(true);
     try {
-      const ws = await createWorkspace(name, desc);
+      const ws = await createWorkspace(name, desc, capacity);
       toast.success("Workspace created");
-      setOpen(false); setName(""); setDesc("");
+      setOpen(false); setName(""); setDesc(""); setCapacity(50);
       setItems((s) => [ws, ...s]);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to create workspace");
@@ -46,18 +48,23 @@ const Workspaces = () => {
             <DialogTrigger asChild>
               <Button variant="hero" size="sm"><Plus className="mr-1" /> New workspace</Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Create workspace</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ws-name">Workspace name</Label>
-                  <Input id="ws-name" placeholder="e.g. ABC School" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+              <DialogContent>
+                <DialogHeader><DialogTitle>Create workspace</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ws-name">Organization name</Label>
+                    <Input id="ws-name" placeholder="e.g. ABC School" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ws-desc">Event description</Label>
+                    <Textarea id="ws-desc" placeholder="What is this workspace for?" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={500} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ws-cap">Maximum queue capacity</Label>
+                    <Input id="ws-cap" type="number" min={1} max={10000} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} />
+                    <p className="text-xs text-muted-foreground">Default capacity for new lobbies in this workspace.</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ws-desc">Description (optional)</Label>
-                  <Textarea id="ws-desc" placeholder="What is this workspace for?" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={500} />
-                </div>
-              </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button onClick={submit} disabled={creating}>
