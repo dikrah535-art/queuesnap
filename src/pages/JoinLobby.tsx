@@ -150,12 +150,22 @@ const JoinLobby = () => {
           ) : (
             <div className="mt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Your name</Label>
+                <Label htmlFor="name">Your name <span className="text-destructive">*</span></Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80}
-                  placeholder="Enter your name" disabled={closed || full} onKeyDown={(e) => e.key === "Enter" && onJoin()} />
+                  placeholder="Enter your name" disabled={closed || full} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone number</Label>
+                <Input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={32}
+                  placeholder="e.g. +91 98765 43210" disabled={closed || full} autoComplete="tel" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="device">Device type <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input id="device" value={deviceType} onChange={(e) => setDeviceType(e.target.value)} maxLength={80}
+                  placeholder="e.g. iPhone 14, Laptop" disabled={closed || full} />
               </div>
               <Button variant="hero" className="w-full" onClick={onJoin} disabled={!name.trim() || joining || closed || full}>
-                {joining ? <Loader2 className="animate-spin" /> : full ? "Lobby full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
+                {joining ? <Loader2 className="animate-spin" /> : full ? "Queue Full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">No account needed. We'll save your spot in this browser.</p>
             </div>
