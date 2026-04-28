@@ -14,7 +14,13 @@ import Collection from "./pages/Collection";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDemoLogin from "./pages/AdminDemoLogin";
 import AdminDemoDashboard from "./pages/AdminDemoDashboard";
+import Workspaces from "./pages/Workspaces";
+import WorkspaceDetail from "./pages/WorkspaceDetail";
+import WorkspaceAdmins from "./pages/WorkspaceAdmins";
+import LobbyManage from "./pages/LobbyManage";
+import JoinLobby from "./pages/JoinLobby";
 import { AdminGuard } from "./components/AdminGuard";
+import { WorkspaceAuthGate } from "./components/workspace/WorkspaceAuthGate";
 import { RecoveryWatcher } from "./components/RecoveryWatcher";
 
 const queryClient = new QueryClient();
@@ -38,6 +44,12 @@ const App = () => (
           <Route path="/admin/collection" element={<AdminGuard><Collection /></AdminGuard>} />
           <Route path="/admin-demo" element={<AdminDemoLogin />} />
           <Route path="/admin-dashboard" element={<AdminDemoDashboard />} />
+          {/* Workspace / Lobby system */}
+          <Route path="/workspaces" element={<WorkspaceAuthGate><Workspaces /></WorkspaceAuthGate>} />
+          <Route path="/workspaces/:id" element={<WorkspaceAuthGate><WorkspaceDetail /></WorkspaceAuthGate>} />
+          <Route path="/workspaces/:wsId/admins" element={<WorkspaceAuthGate><WorkspaceAdmins /></WorkspaceAuthGate>} />
+          <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
+          <Route path="/join/:lobbyId" element={<JoinLobby />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
