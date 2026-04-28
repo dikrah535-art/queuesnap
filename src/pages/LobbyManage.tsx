@@ -168,33 +168,74 @@ const LobbyManage = () => {
           </div>
         </Card>
 
+        {/* QR for this lobby */}
+        <Card className="p-5">
+          <h3 className="mb-4 font-semibold">Share / QR code</h3>
+          <QrCard
+            url={`${window.location.origin}/join/${lobby.id}`}
+            filename={`queuesnap-${lobby.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}
+          />
+        </Card>
+
         {/* Queue list */}
         <Card className="p-5">
-          <h3 className="mb-4 font-semibold">Queue</h3>
-          {entries.length === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">No one in the queue yet.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {entries.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-3 animate-fade-in">
-                  <div className="flex items-center gap-3">
-                    <span className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${e.status === "serving" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
-                      {e.position}
-                    </span>
-                    <div>
-                      <p className="font-medium leading-tight">{e.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {e.status === "serving" ? <span className="inline-flex items-center gap-1 text-primary"><Bell className="h-3 w-3" /> Now serving</span> : "Waiting"}
-                      </p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-semibold">Queue</h3>
+            <Input
+              placeholder="Search by name or phone…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-xs"
+            />
+          </div>
+          {(() => {
+            const q = search.trim().toLowerCase();
+            const filtered = q
+              ? entries.filter((e) =>
+                  e.name.toLowerCase().includes(q) || (e.phone ?? "").toLowerCase().includes(q),
+                )
+              : entries;
+            if (entries.length === 0) {
+              return <p className="py-12 text-center text-sm text-muted-foreground">No one in the queue yet.</p>;
+            }
+            if (filtered.length === 0) {
+              return <p className="py-12 text-center text-sm text-muted-foreground">No matches.</p>;
+            }
+            return (
+              <ul className="divide-y divide-border">
+                {filtered.map((e) => (
+                  <li key={e.id} className="flex items-center justify-between py-3 animate-fade-in gap-2">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold ${e.status === "serving" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                        {e.position}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium leading-tight truncate">{e.name}</p>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                          {e.status === "serving" ? (
+                            <span className="inline-flex items-center gap-1 text-primary"><Bell className="h-3 w-3" /> Now serving</span>
+                          ) : (
+                            <span>Waiting</span>
+                          )}
+                          {e.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {e.phone}</span>}
+                          {e.device_type && <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3" /> {e.device_type}</span>}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => onRemove(e.id)} aria-label="Remove">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => onCollected(e.id)} title="Mark as collected">
+                        <PackageCheck className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Collected</span>
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => onRemove(e.id)} aria-label="Remove">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            );
+          })()}
         </Card>
       </main>
     </div>
