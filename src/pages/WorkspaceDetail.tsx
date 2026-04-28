@@ -25,6 +25,7 @@ const WorkspaceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", max_capacity: 50 });
+  const [qrLobby, setQrLobby] = useState<Lobby | null>(null);
   const [creating, setCreating] = useState(false);
 
   const reload = async () => {
@@ -33,6 +34,7 @@ const WorkspaceDetail = () => {
     try {
       const [w, ls, r] = await Promise.all([fetchWorkspace(id), fetchLobbies(id), getMyRole(id)]);
       setWs(w); setLobbies(ls); setRole(r);
+      setForm((f) => ({ ...f, max_capacity: w.default_capacity ?? 50 }));
       // counts
       if (ls.length) {
         const { data } = await supabase
@@ -147,8 +149,13 @@ const WorkspaceDetail = () => {
                         <Link to={`/workspaces/${ws.id}/lobbies/${l.id}`}><Settings className="mr-1 h-4 w-4" /> Manage</Link>
                       </Button>
                     )}
+                    {isAdmin && (
+                      <Button variant="outline" size="sm" onClick={() => setQrLobby(l)} aria-label="Show QR">
+                        <QrCode className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button asChild variant={isAdmin ? "ghost" : "hero"} size="sm" className="flex-1">
-                      <Link to={`/join/${l.id}`}>Open join page</Link>
+                      <Link to={`/join/${l.id}`}>Join page</Link>
                     </Button>
                   </div>
                 </Card>
@@ -156,6 +163,18 @@ const WorkspaceDetail = () => {
             })}
           </div>
         )}
+
+        <Dialog open={!!qrLobby} onOpenChange={(v) => !v && setQrLobby(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{qrLobby?.name} · Join QR</DialogTitle></DialogHeader>
+            {qrLobby && (
+              <QrCard
+                url={`${window.location.origin}/join/${qrLobby.id}`}
+                filename={`queuesnap-${qrLobby.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
