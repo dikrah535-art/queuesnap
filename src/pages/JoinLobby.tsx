@@ -20,6 +20,8 @@ const JoinLobby = () => {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
 
@@ -67,18 +69,24 @@ const JoinLobby = () => {
 
   const onJoin = async () => {
     if (!lobbyId || !name.trim()) return;
+    if (phone && (phone.trim().length < 4 || phone.trim().length > 32)) {
+      toast.error("Enter a valid phone number"); return;
+    }
     setJoining(true);
     try {
-      const entry = await joinLobby(lobbyId, name);
+      const entry = await joinLobby(lobbyId, name, {
+        phone: phone.trim() || undefined,
+        deviceType: deviceType.trim() || undefined,
+      });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
       setMyEntry(entry);
-      toast.success("You're in the queue!");
+      toast.success("Successfully added to queue");
     } catch (e: any) {
       const msg = e?.message ?? "Failed to join";
-      if (msg.includes("full")) toast.error("Lobby is full");
+      if (msg.includes("full")) toast.error("Queue Full");
       else if (msg.includes("closed")) toast.error("Lobby is closed");
-      else if (msg.includes("Already")) toast.error("You're already in this queue");
+      else if (msg.includes("Already")) toast.error("This phone is already in the queue");
       else toast.error(msg);
     } finally { setJoining(false); }
   };
@@ -142,12 +150,22 @@ const JoinLobby = () => {
           ) : (
             <div className="mt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Your name</Label>
+                <Label htmlFor="name">Your name <span className="text-destructive">*</span></Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80}
-                  placeholder="Enter your name" disabled={closed || full} onKeyDown={(e) => e.key === "Enter" && onJoin()} />
+                  placeholder="Enter your name" disabled={closed || full} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone number</Label>
+                <Input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={32}
+                  placeholder="e.g. +91 98765 43210" disabled={closed || full} autoComplete="tel" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="device">Device type <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input id="device" value={deviceType} onChange={(e) => setDeviceType(e.target.value)} maxLength={80}
+                  placeholder="e.g. iPhone 14, Laptop" disabled={closed || full} />
               </div>
               <Button variant="hero" className="w-full" onClick={onJoin} disabled={!name.trim() || joining || closed || full}>
-                {joining ? <Loader2 className="animate-spin" /> : full ? "Lobby full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
+                {joining ? <Loader2 className="animate-spin" /> : full ? "Queue Full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">No account needed. We'll save your spot in this browser.</p>
             </div>

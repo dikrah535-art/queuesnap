@@ -150,9 +150,11 @@ export type Database = {
       queue_entries: {
         Row: {
           created_at: string
+          device_type: string | null
           id: string
           lobby_id: string
           name: string
+          phone: string | null
           position: number
           served_at: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -160,9 +162,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          device_type?: string | null
           id?: string
           lobby_id: string
           name: string
+          phone?: string | null
           position: number
           served_at?: string | null
           status?: Database["public"]["Enums"]["queue_entry_status"]
@@ -170,9 +174,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          device_type?: string | null
           id?: string
           lobby_id?: string
           name?: string
+          phone?: string | null
           position?: number
           served_at?: string | null
           status?: Database["public"]["Enums"]["queue_entry_status"]
@@ -265,6 +271,7 @@ export type Database = {
       workspaces: {
         Row: {
           created_at: string
+          default_capacity: number
           description: string | null
           id: string
           name: string
@@ -273,6 +280,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_capacity?: number
           description?: string | null
           id?: string
           name: string
@@ -281,6 +289,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_capacity?: number
           description?: string | null
           id?: string
           name?: string
@@ -338,25 +347,55 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
-      join_lobby: {
-        Args: { _lobby_id: string; _name: string; _user_id?: string }
-        Returns: {
-          created_at: string
-          id: string
-          lobby_id: string
-          name: string
-          position: number
-          served_at: string | null
-          status: Database["public"]["Enums"]["queue_entry_status"]
-          user_id: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "queue_entries"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      join_lobby:
+        | {
+            Args: { _lobby_id: string; _name: string; _user_id?: string }
+            Returns: {
+              created_at: string
+              device_type: string | null
+              id: string
+              lobby_id: string
+              name: string
+              phone: string | null
+              position: number
+              served_at: string | null
+              status: Database["public"]["Enums"]["queue_entry_status"]
+              user_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "queue_entries"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _device_type?: string
+              _lobby_id: string
+              _name: string
+              _phone?: string
+              _user_id?: string
+            }
+            Returns: {
+              created_at: string
+              device_type: string | null
+              id: string
+              lobby_id: string
+              name: string
+              phone: string | null
+              position: number
+              served_at: string | null
+              status: Database["public"]["Enums"]["queue_entry_status"]
+              user_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "queue_entries"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       join_queue: { Args: { _id: string; _token: string }; Returns: boolean }
       lookup_device: {
         Args: { _token: string }
@@ -370,14 +409,37 @@ export type Database = {
           token_code: string
         }[]
       }
+      mark_collected: {
+        Args: { _entry_id: string }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          id: string
+          lobby_id: string
+          name: string
+          phone: string | null
+          position: number
+          served_at: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       queue_position: { Args: { _id: string; _token: string }; Returns: number }
       serve_next: {
         Args: { _lobby_id: string }
         Returns: {
           created_at: string
+          device_type: string | null
           id: string
           lobby_id: string
           name: string
+          phone: string | null
           position: number
           served_at: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -395,7 +457,12 @@ export type Database = {
       app_role: "admin" | "user" | "owner"
       device_status: "checked_in" | "in_queue" | "called" | "collected"
       lobby_status: "open" | "closed"
-      queue_entry_status: "waiting" | "serving" | "served" | "cancelled"
+      queue_entry_status:
+        | "waiting"
+        | "serving"
+        | "served"
+        | "cancelled"
+        | "collected"
       workspace_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
@@ -527,7 +594,13 @@ export const Constants = {
       app_role: ["admin", "user", "owner"],
       device_status: ["checked_in", "in_queue", "called", "collected"],
       lobby_status: ["open", "closed"],
-      queue_entry_status: ["waiting", "serving", "served", "cancelled"],
+      queue_entry_status: [
+        "waiting",
+        "serving",
+        "served",
+        "cancelled",
+        "collected",
+      ],
       workspace_role: ["owner", "admin", "member"],
     },
   },
