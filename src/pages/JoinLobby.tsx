@@ -20,6 +20,8 @@ const JoinLobby = () => {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
 
@@ -67,18 +69,24 @@ const JoinLobby = () => {
 
   const onJoin = async () => {
     if (!lobbyId || !name.trim()) return;
+    if (phone && (phone.trim().length < 4 || phone.trim().length > 32)) {
+      toast.error("Enter a valid phone number"); return;
+    }
     setJoining(true);
     try {
-      const entry = await joinLobby(lobbyId, name);
+      const entry = await joinLobby(lobbyId, name, {
+        phone: phone.trim() || undefined,
+        deviceType: deviceType.trim() || undefined,
+      });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
       setMyEntry(entry);
-      toast.success("You're in the queue!");
+      toast.success("Successfully added to queue");
     } catch (e: any) {
       const msg = e?.message ?? "Failed to join";
-      if (msg.includes("full")) toast.error("Lobby is full");
+      if (msg.includes("full")) toast.error("Queue Full");
       else if (msg.includes("closed")) toast.error("Lobby is closed");
-      else if (msg.includes("Already")) toast.error("You're already in this queue");
+      else if (msg.includes("Already")) toast.error("This phone is already in the queue");
       else toast.error(msg);
     } finally { setJoining(false); }
   };
