@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, DoorOpen, Loader2, Plus, Settings, Users, Activity } from "lucide-react";
+import { ArrowLeft, DoorOpen, Loader2, Plus, QrCode, Settings, Users, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { QrCard } from "@/components/workspace/QrCard";
 import {
   createLobby, fetchLobbies, fetchWorkspace, getMyRole,
   type Lobby, type Workspace, type WorkspaceRole,
