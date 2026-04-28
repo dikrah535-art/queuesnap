@@ -26,6 +26,7 @@ const Index = () => {
           <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
           <nav className="flex items-center gap-1">
             <Button asChild variant="ghost" size="sm"><Link to="/status">Status</Link></Button>
+            <Button asChild variant="ghost" size="sm"><Link to="/workspaces">Workspaces</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/admin/login">Admin</Link></Button>
           </nav>
         </div>
