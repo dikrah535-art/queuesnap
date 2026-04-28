@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, Check, Copy, Loader2, PlayCircle, Power, Trash2, X } from "lucide-react";
+import { ArrowLeft, Bell, Check, Copy, Loader2, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { QrCard } from "@/components/workspace/QrCard";
 import {
   cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchQueueEntries,
-  serveNext, updateLobby, joinLobby,
+  markCollected, serveNext, updateLobby, joinLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 
@@ -20,6 +21,7 @@ const LobbyManage = () => {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
+  const [search, setSearch] = useState("");
 
   const reload = async () => {
     if (!lobbyId) return;
@@ -74,7 +76,13 @@ const LobbyManage = () => {
   };
 
   const onRemove = async (id: string) => {
-    try { await cancelEntry(id); toast.success("Removed"); }
+    if (!confirm("Remove this person from the queue?")) return;
+    try { await cancelEntry(id); toast.success("Removed from queue"); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const onCollected = async (id: string) => {
+    try { await markCollected(id); toast.success("Marked as collected ✅"); }
     catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
