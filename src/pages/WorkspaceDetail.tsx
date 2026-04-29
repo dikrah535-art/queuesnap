@@ -68,7 +68,7 @@ const WorkspaceDetail = () => {
   const submit = async () => {
     if (!id) return;
     if (form.name.trim().length < 2) { toast.error("Name must be at least 2 characters"); return; }
-    if (form.max_capacity < 1) { toast.error("Capacity must be at least 1"); return; }
+    if (!Number.isFinite(form.max_capacity) || form.max_capacity < 1) { toast.error("Capacity must be a number ≥ 1"); return; }
     setCreating(true);
     try {
       const lobby = await createLobby({ workspace_id: id, name: form.name, description: form.description, max_capacity: form.max_capacity });
@@ -103,7 +103,12 @@ const WorkspaceDetail = () => {
                   <div className="space-y-4">
                     <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Device Submission" maxLength={80} /></div>
                     <div className="space-y-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="What is this lobby for?" maxLength={500} /></div>
-                    <div className="space-y-2"><Label>Max capacity</Label><Input type="number" min={1} max={10000} value={form.max_capacity} onChange={(e) => setForm((f) => ({ ...f, max_capacity: Number(e.target.value) }))} /></div>
+                    <div className="space-y-2"><Label>Max capacity</Label><Input type="number" inputMode="numeric" min={1} max={10000} value={Number.isFinite(form.max_capacity) ? form.max_capacity : ""} onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") { setForm((f) => ({ ...f, max_capacity: NaN })); return; }
+                      const n = parseInt(v, 10);
+                      setForm((f) => ({ ...f, max_capacity: Number.isFinite(n) ? Math.max(1, Math.min(10000, n)) : NaN }));
+                    }} onBlur={() => { if (!Number.isFinite(form.max_capacity) || form.max_capacity < 1) setForm((f) => ({ ...f, max_capacity: 50 })); }} /></div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
