@@ -22,13 +22,20 @@ const Workspaces = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [capacity, setCapacity] = useState(50);
+  const [capacity, setCapacity] = useState<number>(50);
   const [creating, setCreating] = useState(false);
+
+  // Ghost-preview state (separate from real inputs)
+  const [ghostName, setGhostName] = useState("");
+  const [ghostDesc, setGhostDesc] = useState("");
+  const [ghostCap, setGhostCap] = useState(0);
   const animRef = useRef<number[]>([]);
 
   const reload = async () => {
     setLoading(true);
-    try { setItems(await fetchMyWorkspaces()); } finally { setLoading(false); }
+    try { setItems(await fetchMyWorkspaces()); }
+    catch (e: any) { toast.error(e?.message ?? "Failed to load workspaces"); }
+    finally { setLoading(false); }
   };
   useEffect(() => { reload(); }, []);
 
@@ -37,13 +44,13 @@ const Workspaces = () => {
     animRef.current = [];
   };
 
-  // Run guided demo animations when dialog opens with empty fields
+  // Animate the ghost preview layer (never touches real inputs)
   useEffect(() => {
-    if (!open) { clearAnimations(); return; }
-    // Only auto-fill when user hasn't started typing
-    if (name || desc) return;
-
-    setName(""); setDesc(""); setCapacity(0);
+    if (!open) {
+      clearAnimations();
+      setGhostName(""); setGhostDesc(""); setGhostCap(0);
+      return;
+    }
 
     const typeInto = (text: string, setter: (s: string) => void, startDelay: number, perChar = 35) => {
       for (let i = 1; i <= text.length; i++) {
@@ -52,51 +59,73 @@ const Workspaces = () => {
       }
     };
 
-    typeInto(DEMO_NAME, setName, 200, 35);
-    const descStart = 200 + DEMO_NAME.length * 35 + 250;
-    typeInto(DEMO_DESC, setDesc, descStart, 40);
-
-    // Animate capacity 0 -> 25 after text is done
-    const capStart = descStart + DEMO_DESC.length * 40 + 200;
-    const steps = DEMO_CAPACITY;
-    for (let i = 1; i <= steps; i++) {
-      const id = window.setTimeout(() => setCapacity(i), capStart + i * 30);
+    const loop = () => {
+      clearAnimations();
+      setGhostName(""); setGhostDesc(""); setGhostCap(0);
+      typeInto(DEMO_NAME, setGhostName, 300, 45);
+      const descStart = 300 + DEMO_NAME.length * 45 + 300;
+      typeInto(DEMO_DESC, setGhostDesc, descStart, 50);
+      const capStart = descStart + DEMO_DESC.length * 50 + 200;
+      for (let i = 1; i <= DEMO_CAPACITY; i++) {
+        const id = window.setTimeout(() => setGhostCap(i), capStart + i * 40);
+        animRef.current.push(id);
+      }
+      // restart loop
+      const total = capStart + DEMO_CAPACITY * 40 + 2200;
+      const id = window.setTimeout(loop, total);
       animRef.current.push(id);
-    }
-
+    };
+    loop();
     return () => clearAnimations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const submit = async () => {
-    if (name.trim().length < 2) { toast.error("Name must be at least 2 characters"); return; }
-    if (!Number.isFinite(capacity) || capacity < 1) { toast.error("Capacity must be a number ≥ 1"); return; }
+    if (creating) return;
+    const cleanName = name.trim();
+    if (cleanName.length < 2) { toast.error("Name must be at least 2 characters"); return; }
+    if (!Number.isFinite(capacity) || capacity < 1) {
+      toast.error("Capacity must be a number ≥ 1");
+      return;
+    }
+
     setCreating(true);
+    // Hard safety: never let the spinner spin forever
+    const watchdog = window.setTimeout(() => {
+      setCreating((c) => {
+        if (c) toast.error("Request timed out. Please try again.");
+        return false;
+      });
+    }, 15000);
+
     try {
-      // Re-verify session to avoid stale-token RLS errors
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        toast.error("Your session expired. Please sign in again.");
+        toast.error("Please sign in to create a workspace.");
         navigate("/admin/login?next=/workspaces");
         return;
       }
-      const ws = await createWorkspace(name, desc, capacity);
+      const ws = await createWorkspace(cleanName, desc, capacity);
       toast.success("Workspace created — taking you in…");
-      setOpen(false); setName(""); setDesc(""); setCapacity(50);
+      setOpen(false);
+      setName(""); setDesc(""); setCapacity(50);
       setItems((s) => [ws, ...s]);
-      // Guide user to the new workspace
-      window.setTimeout(() => navigate(`/workspaces/${ws.id}`), 400);
+      window.setTimeout(() => navigate(`/workspaces/${ws.id}`), 300);
     } catch (e: any) {
       const msg: string = e?.message ?? "Failed to create workspace";
-      if (msg.toLowerCase().includes("row-level security") || msg.toLowerCase().includes("rls")) {
+      const lower = msg.toLowerCase();
+      if (lower.includes("row-level security") || lower.includes("rls") || lower.includes("permission")) {
         toast.error("Permission error. Please sign out and sign in again.");
       } else {
         toast.error(msg);
       }
-    } finally { setCreating(false); }
+    } finally {
+      window.clearTimeout(watchdog);
+      setCreating(false);
+    }
   };
 
   const handleOpenChange = (next: boolean) => {
+    if (creating) return; // don't close mid-request
     setOpen(next);
     if (!next) {
       clearAnimations();
@@ -113,21 +142,61 @@ const Workspaces = () => {
             <DialogTrigger asChild>
               <Button variant="hero" size="sm"><Plus className="mr-1" /> New workspace</Button>
             </DialogTrigger>
-            <DialogContent className="animate-scale-in">
+            <DialogContent className="animate-scale-in max-w-lg">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
                   Create workspace
                 </DialogTitle>
               </DialogHeader>
+
+              {/* Ghost preview layer — non-interactive, low opacity, separate from real inputs */}
+              <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 select-none pointer-events-none" aria-hidden="true">
+                <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <span>Preview of how workspace works</span>
+                  <span className="rounded bg-muted px-1.5 py-0.5">demo</span>
+                </div>
+                <div className="space-y-2 opacity-60">
+                  <div className="flex items-center gap-2">
+                    <span className="w-20 text-xs text-muted-foreground">Name</span>
+                    <span className="font-medium text-sm tracking-tight min-h-[1.25rem]">
+                      {ghostName}
+                      <span className="ml-0.5 inline-block h-3 w-[2px] -mb-0.5 bg-foreground/50 animate-pulse" />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-20 text-xs text-muted-foreground">Event</span>
+                    <span className="text-sm min-h-[1.25rem]">{ghostDesc || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-20 text-xs text-muted-foreground">Capacity</span>
+                    <span className="text-sm tabular-nums font-semibold text-primary">{ghostCap}</span>
+                    <span className="text-xs text-muted-foreground">people</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="ws-name">Organization name</Label>
-                  <Input id="ws-name" placeholder="e.g. ABC School" value={name} onChange={(e) => { clearAnimations(); setName(e.target.value); }} maxLength={80} autoComplete="off" />
+                  <Input
+                    id="ws-name"
+                    placeholder="e.g. ABC School"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={80}
+                    autoComplete="off"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ws-desc">Event description</Label>
-                  <Textarea id="ws-desc" placeholder="What is this workspace for?" value={desc} onChange={(e) => { clearAnimations(); setDesc(e.target.value); }} maxLength={500} />
+                  <Textarea
+                    id="ws-desc"
+                    placeholder="What is this workspace for?"
+                    value={desc}
+                    onChange={(e) => setDesc(e.target.value)}
+                    maxLength={500}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ws-cap">Maximum queue capacity</Label>
@@ -139,20 +208,19 @@ const Workspaces = () => {
                     max={10000}
                     value={Number.isFinite(capacity) ? capacity : ""}
                     onChange={(e) => {
-                      clearAnimations();
                       const v = e.target.value;
-                      if (v === "") { setCapacity(NaN); return; }
+                      if (v === "") { setCapacity(NaN as unknown as number); return; }
                       const n = parseInt(v, 10);
-                      setCapacity(Number.isFinite(n) ? Math.max(1, Math.min(10000, n)) : NaN);
+                      if (!Number.isFinite(n)) return;
+                      setCapacity(Math.max(1, Math.min(10000, n)));
                     }}
                     onBlur={() => { if (!Number.isFinite(capacity) || capacity < 1) setCapacity(50); }}
                   />
-                  <p className="text-xs text-muted-foreground">Suggested capacity based on typical usage.</p>
+                  <p className="text-xs text-muted-foreground">Suggested capacity based on typical usage. You can change it anytime.</p>
                 </div>
-                <p className="text-xs text-muted-foreground">You can customize this anytime.</p>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={creating}>Cancel</Button>
                 <Button onClick={submit} disabled={creating}>
                   {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating…</> : "Create workspace"}
                 </Button>
