@@ -27,7 +27,7 @@ const Workspaces = () => {
 
   const submit = async () => {
     if (name.trim().length < 2) { toast.error("Name must be at least 2 characters"); return; }
-    if (capacity < 1) { toast.error("Capacity must be at least 1"); return; }
+    if (!Number.isFinite(capacity) || capacity < 1) { toast.error("Capacity must be a number ≥ 1"); return; }
     setCreating(true);
     try {
       const ws = await createWorkspace(name, desc, capacity);
@@ -61,7 +61,12 @@ const Workspaces = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ws-cap">Maximum queue capacity</Label>
-                    <Input id="ws-cap" type="number" min={1} max={10000} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} />
+                    <Input id="ws-cap" type="number" inputMode="numeric" min={1} max={10000} value={Number.isFinite(capacity) ? capacity : ""} onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") { setCapacity(NaN); return; }
+                      const n = parseInt(v, 10);
+                      setCapacity(Number.isFinite(n) ? Math.max(1, Math.min(10000, n)) : NaN);
+                    }} onBlur={() => { if (!Number.isFinite(capacity) || capacity < 1) setCapacity(50); }} />
                     <p className="text-xs text-muted-foreground">Default capacity for new lobbies in this workspace.</p>
                   </div>
                 </div>
