@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { createWorkspace, fetchMyWorkspaces, type Workspace } from "@/lib/workspaces";
 
 const DEMO_NAME = "Agresh Ji's Workspace";
@@ -17,6 +18,7 @@ const DEMO_CAPACITY = 25;
 
 const Workspaces = () => {
   const navigate = useNavigate();
+  const { ready: authReady, session, user, refreshSession } = useAuth();
   const [items, setItems] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -32,12 +34,18 @@ const Workspaces = () => {
   const animRef = useRef<number[]>([]);
 
   const reload = async () => {
+    if (!authReady) return;
+    if (!user) {
+      setLoading(false);
+      toast.error("Please sign in");
+      return;
+    }
     setLoading(true);
     try { setItems(await fetchMyWorkspaces()); }
     catch (e: any) { toast.error(e?.message ?? "Failed to load workspaces"); }
     finally { setLoading(false); }
   };
-  useEffect(() => { reload(); }, []);
+  useEffect(() => { reload(); }, [authReady, user]);
 
   const clearAnimations = () => {
     animRef.current.forEach((id) => window.clearTimeout(id));
@@ -98,14 +106,14 @@ const Workspaces = () => {
     }, 15000);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        toast.error("Please sign in to create a workspace.");
+      const activeSession = session ?? await refreshSession();
+      if (!authReady || !activeSession?.user) {
+        toast.error("Please sign in");
         navigate("/admin/login?next=/workspaces");
         return;
       }
-      const ws = await createWorkspace(cleanName, desc, capacity);
-      toast.success("Workspace created — taking you in…");
+      const ws = await createWorkspace(cleanName, desc, capacity, activeSession.user.id);
+      toast.success("Workspace created successfully");
       setOpen(false);
       setName(""); setDesc(""); setCapacity(50);
       setItems((s) => [ws, ...s]);
