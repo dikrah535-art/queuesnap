@@ -3,9 +3,11 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { isRecoveryMode } from "@/lib/recovery";
+import { useAuth } from "@/lib/auth";
 
 export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<"loading" | "ok" | "no" | "recovery">("loading");
+  const { ready, user } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -16,16 +18,15 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
       if (isRecoveryMode()) { if (mounted) setState("recovery"); return; }
       // Use getUser() to cryptographically verify the JWT against the auth server,
       // not just read it from localStorage (which getSession does).
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!user || error) { if (mounted) setState("no"); return; }
+      if (!ready) { if (mounted) setState("loading"); return; }
+      if (!user) { if (mounted) setState("no"); return; }
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
       if (!mounted) return;
       setState(data ? "ok" : "no");
     };
     check();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => { check(); });
-    return () => { mounted = false; sub.subscription.unsubscribe(); };
-  }, []);
+    return () => { mounted = false; };
+  }, [ready, user]);
 
   if (state === "loading") return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-accent" /></div>;
   if (state === "recovery") return <Navigate to="/reset-password" replace />;

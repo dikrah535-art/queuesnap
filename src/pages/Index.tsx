@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlowDemo } from "@/components/FlowDemo";
-import { Typewriter } from "@/components/Typewriter";
 import { Reveal } from "@/components/Reveal";
 
 const features = [
@@ -40,17 +39,11 @@ const Index = () => {
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               Smart Device Submission System
             </div>
-            <h1 className="mt-6 text-6xl md:text-8xl font-semibold tracking-tight text-foreground">
-              QueueSnap
+            <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight text-foreground">
+              Smart Device Submission & Queue Management System
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-lg md:text-xl text-muted-foreground leading-relaxed min-h-[3.5rem]">
-              <Typewriter
-                words={[
-                  "Skip the line. Save your time.",
-                  "Join queues digitally.",
-                  "Real-time queue tracking.",
-                ]}
-              />
+            <p className="mx-auto mt-5 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
+              Eliminate crowd congestion during device collection using tokens, QR codes, and digital queues.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[200px]">

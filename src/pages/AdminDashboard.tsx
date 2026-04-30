@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/lib/auth";
 
 interface Device {
   id: string; token_code: string; owner_name: string; owner_id_text: string | null;
@@ -35,6 +36,7 @@ const statusColor: Record<string, string> = {
 
 const AdminDashboard = () => {
   const nav = useNavigate();
+  const { signOut: clearAuthSession } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -151,7 +153,7 @@ const AdminDashboard = () => {
     load();
   };
 
-  const signOut = async () => { await supabase.auth.signOut(); nav("/admin/login"); };
+  const signOut = async () => { await clearAuthSession(); nav("/admin/login", { replace: true }); };
 
   return (
     <div className="min-h-screen bg-background">

@@ -77,7 +77,7 @@ const CheckIn = () => {
     const { data: rows } = await supabase.rpc("lookup_device", { _token: tokenCode });
     const created = Array.isArray(rows) ? rows[0] : null;
     if (!created) { toast.error("Check-in saved but lookup failed"); setLoading(false); return; }
-    toast.success(`Token ${created.token_code} · ${slot.slot_label}`);
+    toast.success("Device submitted successfully");
     nav(`/receipt/${created.id}`);
   };
 

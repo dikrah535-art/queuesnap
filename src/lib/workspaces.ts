@@ -8,6 +8,7 @@ export interface Workspace {
   id: string;
   name: string;
   description: string | null;
+  user_id?: string;
   owner_id: string;
   default_capacity: number;
   created_at: string;
@@ -83,6 +84,8 @@ export function forgetAnonEntry(lobbyId: string) {
 
 // ---- Queries ----
 export async function fetchMyWorkspaces() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) throw new Error("Authentication required");
   const { data, error } = await supabase
     .from("workspaces")
     .select("*")
@@ -91,16 +94,18 @@ export async function fetchMyWorkspaces() {
   return (data ?? []) as Workspace[];
 }
 
-export async function createWorkspace(name: string, description: string, defaultCapacity = 50) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in");
+export async function createWorkspace(name: string, description: string, defaultCapacity = 50, userId?: string) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const id = userId ?? session?.user.id;
+  if (!id || !session?.user) throw new Error("Authentication required");
   const cap = Math.max(1, Math.min(10000, Math.floor(defaultCapacity || 50)));
   const { data, error } = await supabase
     .from("workspaces")
     .insert({
       name: name.trim(),
       description: description.trim() || null,
-      owner_id: user.id,
+      user_id: id,
+      owner_id: id,
       default_capacity: cap,
     } as never)
     .select()

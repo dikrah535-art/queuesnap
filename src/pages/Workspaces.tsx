@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { createWorkspace, fetchMyWorkspaces, type Workspace } from "@/lib/workspaces";
 
 const DEMO_NAME = "Agresh Ji's Workspace";
@@ -17,6 +17,7 @@ const DEMO_CAPACITY = 25;
 
 const Workspaces = () => {
   const navigate = useNavigate();
+  const { ready: authReady, session, user, refreshSession } = useAuth();
   const [items, setItems] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -32,12 +33,18 @@ const Workspaces = () => {
   const animRef = useRef<number[]>([]);
 
   const reload = async () => {
+    if (!authReady) return;
+    if (!user) {
+      setLoading(false);
+      toast.error("Please sign in");
+      return;
+    }
     setLoading(true);
     try { setItems(await fetchMyWorkspaces()); }
     catch (e: any) { toast.error(e?.message ?? "Failed to load workspaces"); }
     finally { setLoading(false); }
   };
-  useEffect(() => { reload(); }, []);
+  useEffect(() => { reload(); }, [authReady, user]);
 
   const clearAnimations = () => {
     animRef.current.forEach((id) => window.clearTimeout(id));
@@ -98,14 +105,14 @@ const Workspaces = () => {
     }, 15000);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        toast.error("Please sign in to create a workspace.");
+      const activeSession = session ?? await refreshSession();
+      if (!activeSession?.user) {
+        toast.error("Please sign in");
         navigate("/admin/login?next=/workspaces");
         return;
       }
-      const ws = await createWorkspace(cleanName, desc, capacity);
-      toast.success("Workspace created — taking you in…");
+      const ws = await createWorkspace(cleanName, desc, capacity, activeSession.user.id);
+      toast.success("Workspace created successfully");
       setOpen(false);
       setName(""); setDesc(""); setCapacity(50);
       setItems((s) => [ws, ...s]);
@@ -153,7 +160,7 @@ const Workspaces = () => {
               {/* Ghost preview layer — non-interactive, low opacity, separate from real inputs */}
               <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 select-none pointer-events-none" aria-hidden="true">
                 <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <span>Preview of how workspace works</span>
+                  <span>Demo Preview</span>
                   <span className="rounded bg-muted px-1.5 py-0.5">demo</span>
                 </div>
                 <div className="space-y-2 opacity-60">
@@ -221,7 +228,7 @@ const Workspaces = () => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={creating}>Cancel</Button>
-                <Button onClick={submit} disabled={creating}>
+                <Button onClick={submit} disabled={creating || !authReady}>
                   {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating…</> : "Create workspace"}
                 </Button>
               </DialogFooter>

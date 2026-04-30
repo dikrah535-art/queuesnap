@@ -22,17 +22,19 @@ import JoinLobby from "./pages/JoinLobby";
 import { AdminGuard } from "./components/AdminGuard";
 import { WorkspaceAuthGate } from "./components/workspace/WorkspaceAuthGate";
 import { RecoveryWatcher } from "./components/RecoveryWatcher";
+import { AuthProvider } from "./lib/auth";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <RecoveryWatcher />
-        <Routes>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <RecoveryWatcher />
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/receipt/:id" element={<Receipt />} />
@@ -51,9 +53,10 @@ const App = () => (
           <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
           <Route path="/join/:lobbyId" element={<JoinLobby />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
