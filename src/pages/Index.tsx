@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlowDemo } from "@/components/FlowDemo";
-import { Typewriter } from "@/components/Typewriter";
 import { Reveal } from "@/components/Reveal";
 
 const features = [

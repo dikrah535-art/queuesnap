@@ -160,7 +160,7 @@ const Workspaces = () => {
               {/* Ghost preview layer — non-interactive, low opacity, separate from real inputs */}
               <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 select-none pointer-events-none" aria-hidden="true">
                 <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <span>Preview of how workspace works</span>
+                  <span>Demo Preview</span>
                   <span className="rounded bg-muted px-1.5 py-0.5">demo</span>
                 </div>
                 <div className="space-y-2 opacity-60">
