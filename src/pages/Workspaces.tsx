@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { createWorkspace, fetchMyWorkspaces, type Workspace } from "@/lib/workspaces";
 
@@ -107,7 +106,7 @@ const Workspaces = () => {
 
     try {
       const activeSession = session ?? await refreshSession();
-      if (!authReady || !activeSession?.user) {
+      if (!activeSession?.user) {
         toast.error("Please sign in");
         navigate("/admin/login?next=/workspaces");
         return;
@@ -229,7 +228,7 @@ const Workspaces = () => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={creating}>Cancel</Button>
-                <Button onClick={submit} disabled={creating}>
+                <Button onClick={submit} disabled={creating || !authReady}>
                   {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating…</> : "Create workspace"}
                 </Button>
               </DialogFooter>
