@@ -331,6 +331,27 @@ export type Database = {
         }[]
       }
       clear_queue: { Args: { _lobby_id: string }; Returns: number }
+      fetch_lobby_entries_admin: {
+        Args: { _include_all?: boolean; _lobby_id: string }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          id: string
+          lobby_id: string
+          name: string
+          phone: string | null
+          position: number
+          served_at: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
