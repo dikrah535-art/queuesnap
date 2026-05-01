@@ -3,6 +3,7 @@ import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLin
 import { Button } from "@/components/ui/button";
 import { FlowDemo } from "@/components/FlowDemo";
 import { Reveal } from "@/components/Reveal";
+import { Typewriter } from "@/components/Typewriter";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
