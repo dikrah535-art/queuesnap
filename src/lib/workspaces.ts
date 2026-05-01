@@ -170,16 +170,36 @@ export async function fetchLobby(id: string) {
   return data as Lobby;
 }
 
+/**
+ * Public-safe queue read. Excludes `phone` (which is column-restricted in RLS
+ * to workspace admins only). Used by the public JoinLobby page.
+ */
 export async function fetchQueueEntries(
   lobbyId: string,
   opts: { includeAll?: boolean } = {},
 ) {
   let q = supabase
     .from("queue_entries")
-    .select("*")
+    .select("id, lobby_id, user_id, name, device_type, position, status, created_at, served_at")
     .eq("lobby_id", lobbyId);
   if (!opts.includeAll) q = q.in("status", ["waiting", "serving"]);
   const { data, error } = await q.order("position", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as Omit<QueueEntry, "phone">[]).map((e) => ({ ...e, phone: null })) as QueueEntry[];
+}
+
+/**
+ * Admin-only queue read. Returns full entry data including phone numbers.
+ * Server-side enforces that the caller is an admin/owner of the lobby's workspace.
+ */
+export async function fetchLobbyEntriesAdmin(
+  lobbyId: string,
+  opts: { includeAll?: boolean } = {},
+) {
+  const { data, error } = await supabase.rpc("fetch_lobby_entries_admin", {
+    _lobby_id: lobbyId,
+    _include_all: opts.includeAll ?? false,
+  } as never);
   if (error) throw error;
   return (data ?? []) as QueueEntry[];
 }
