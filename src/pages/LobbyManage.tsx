@@ -23,6 +23,19 @@ const LobbyManage = () => {
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
   const [search, setSearch] = useState("");
+  const { ringing, start: startRing, stop: stopRing } = useRingTone();
+  const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
+
+  const onRing = (entryId: string, name: string) => {
+    setRingingEntryId(entryId);
+    startRing();
+    toast.success(`Ringing ${name}…`);
+  };
+  const onStopRing = () => {
+    stopRing();
+    setRingingEntryId(null);
+    toast.success("Ring stopped");
+  };
 
   const reload = async () => {
     if (!lobbyId) return;
