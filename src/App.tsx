@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CheckIn from "./pages/CheckIn";
+import LobbyChooser from "./pages/LobbyChooser";
 import Receipt from "./pages/Receipt";
 import Status from "./pages/Status";
 import AdminLogin from "./pages/AdminLogin";
@@ -36,7 +37,8 @@ const App = () => (
           <RecoveryWatcher />
           <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/checkin" element={<CheckIn />} />
+          <Route path="/checkin" element={<LobbyChooser />} />
+          <Route path="/checkin/device" element={<CheckIn />} />
           <Route path="/receipt/:id" element={<Receipt />} />
           <Route path="/status" element={<Status />} />
           <Route path="/status/:id" element={<Status />} />

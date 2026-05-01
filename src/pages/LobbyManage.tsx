@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, Check, Copy, Loader2, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Check, Copy, Loader2, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
+import { useRingTone } from "@/lib/useRingTone";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,19 @@ const LobbyManage = () => {
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
   const [search, setSearch] = useState("");
+  const { ringing, start: startRing, stop: stopRing } = useRingTone();
+  const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
+
+  const onRing = (entryId: string, name: string) => {
+    setRingingEntryId(entryId);
+    startRing();
+    toast.success(`Ringing ${name}…`);
+  };
+  const onStopRing = () => {
+    stopRing();
+    setRingingEntryId(null);
+    toast.success("Ring stopped");
+  };
 
   const reload = async () => {
     if (!lobbyId) return;
@@ -46,6 +60,19 @@ const LobbyManage = () => {
 
   const serving = useMemo(() => entries.find((e) => e.status === "serving"), [entries]);
   const waiting = useMemo(() => entries.filter((e) => e.status === "waiting"), [entries]);
+
+  // Auto-stop ring if the ringing entry leaves the active queue (collected/cancelled)
+  useEffect(() => {
+    if (!ringingEntryId) return;
+    const stillActive = entries.some(
+      (e) => e.id === ringingEntryId && (e.status === "serving" || e.status === "waiting"),
+    );
+    if (!stillActive) {
+      stopRing();
+      setRingingEntryId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, ringingEntryId]);
 
   const toggleStatus = async () => {
     if (!lobby) return;
@@ -213,7 +240,10 @@ const LobbyManage = () => {
                         <p className="font-medium leading-tight truncate">{e.name}</p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {e.status === "serving" ? (
-                            <span className="inline-flex items-center gap-1 text-primary"><Bell className="h-3 w-3" /> Now serving</span>
+                            <span className="inline-flex items-center gap-1 text-primary">
+                              <Bell className={`h-3 w-3 ${ringingEntryId === e.id ? "animate-pulse" : ""}`} />
+                              {ringingEntryId === e.id ? "Ringing…" : "Now serving"}
+                            </span>
                           ) : (
                             <span>Waiting</span>
                           )}
@@ -223,9 +253,20 @@ const LobbyManage = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <Button variant="outline" size="sm" onClick={() => onCollected(e.id)} title="Mark as collected">
-                        <PackageCheck className="h-4 w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Collected</span>
+                      {ringingEntryId === e.id && ringing ? (
+                        <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
+                          <BellOff className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Stop ring</span>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => onRing(e.id, e.name)} title="Ring this person">
+                          <Bell className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Ring</span>
+                        </Button>
+                      )}
+                      <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Device returned to owner">
+                        <Undo2 className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Return</span>
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => onRemove(e.id)} aria-label="Remove">
                         <X className="h-4 w-4" />

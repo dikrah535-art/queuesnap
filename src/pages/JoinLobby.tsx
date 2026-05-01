@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Bell, Check, Loader2, LogIn, X } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Bell, Check, Loader2, LogIn, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/workspaces";
 
 const JoinLobby = () => {
+  const navigate = useNavigate();
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
@@ -112,6 +113,14 @@ const JoinLobby = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
         <div className="container flex h-16 items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/checkin"))}
+            aria-label="Back"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back
+          </Button>
           <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
         </div>
       </header>
