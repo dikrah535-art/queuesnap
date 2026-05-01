@@ -61,6 +61,19 @@ const LobbyManage = () => {
   const serving = useMemo(() => entries.find((e) => e.status === "serving"), [entries]);
   const waiting = useMemo(() => entries.filter((e) => e.status === "waiting"), [entries]);
 
+  // Auto-stop ring if the ringing entry leaves the active queue (collected/cancelled)
+  useEffect(() => {
+    if (!ringingEntryId) return;
+    const stillActive = entries.some(
+      (e) => e.id === ringingEntryId && (e.status === "serving" || e.status === "waiting"),
+    );
+    if (!stillActive) {
+      stopRing();
+      setRingingEntryId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, ringingEntryId]);
+
   const toggleStatus = async () => {
     if (!lobby) return;
     try {
