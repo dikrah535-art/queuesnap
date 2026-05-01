@@ -144,7 +144,17 @@ const Workspaces = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
+              aria-label="Back"
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back
+            </Button>
+            <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
+          </div>
           <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button variant="hero" size="sm"><Plus className="mr-1" /> New workspace</Button>
