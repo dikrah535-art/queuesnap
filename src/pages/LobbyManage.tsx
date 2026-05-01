@@ -10,7 +10,7 @@ import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QrCard } from "@/components/workspace/QrCard";
 import {
-  cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchQueueEntries,
+  cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
   markCollected, serveNext, updateLobby, joinLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
@@ -26,7 +26,7 @@ const LobbyManage = () => {
   const reload = async () => {
     if (!lobbyId) return;
     try {
-      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId)]);
+      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchLobbyEntriesAdmin(lobbyId, { includeAll: false })]);
       setLobby(l); setEntries(es);
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
