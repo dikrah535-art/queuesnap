@@ -227,7 +227,10 @@ const LobbyManage = () => {
                         <p className="font-medium leading-tight truncate">{e.name}</p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {e.status === "serving" ? (
-                            <span className="inline-flex items-center gap-1 text-primary"><Bell className="h-3 w-3" /> Now serving</span>
+                            <span className="inline-flex items-center gap-1 text-primary">
+                              <Bell className={`h-3 w-3 ${ringingEntryId === e.id ? "animate-pulse" : ""}`} />
+                              {ringingEntryId === e.id ? "Ringing…" : "Now serving"}
+                            </span>
                           ) : (
                             <span>Waiting</span>
                           )}
@@ -237,9 +240,20 @@ const LobbyManage = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <Button variant="outline" size="sm" onClick={() => onCollected(e.id)} title="Mark as collected">
-                        <PackageCheck className="h-4 w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Collected</span>
+                      {ringingEntryId === e.id && ringing ? (
+                        <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
+                          <BellOff className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Stop ring</span>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => onRing(e.id, e.name)} title="Ring this person">
+                          <Bell className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Ring</span>
+                        </Button>
+                      )}
+                      <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Device returned to owner">
+                        <Undo2 className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Return</span>
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => onRemove(e.id)} aria-label="Remove">
                         <X className="h-4 w-4" />
