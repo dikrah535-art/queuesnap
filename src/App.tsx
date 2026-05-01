@@ -37,7 +37,8 @@ const App = () => (
           <RecoveryWatcher />
           <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/checkin" element={<CheckIn />} />
+          <Route path="/checkin" element={<LobbyChooser />} />
+          <Route path="/checkin/device" element={<CheckIn />} />
           <Route path="/receipt/:id" element={<Receipt />} />
           <Route path="/status" element={<Status />} />
           <Route path="/status/:id" element={<Status />} />
