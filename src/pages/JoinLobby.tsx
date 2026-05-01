@@ -15,6 +15,7 @@ import {
 } from "@/lib/workspaces";
 
 const JoinLobby = () => {
+  const navigate = useNavigate();
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
