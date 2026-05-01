@@ -40,9 +40,24 @@ const Index = () => {
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               Smart Device Submission System
             </div>
-            <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight text-foreground">
-              Smart Device Submission & Queue Management System
-            </h1>
+
+            {/* Big brand title */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary md:h-14 md:w-14">
+                <QrCode className="h-7 w-7 md:h-8 md:w-8" />
+              </span>
+              <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-foreground">
+                QueueSnap
+              </h1>
+            </div>
+
+            <h2 className="mt-5 text-2xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Smart Device Submission &amp;{" "}
+              <Typewriter
+                className="text-primary"
+                words={["Queue Management", "Token Generation", "QR Verification", "Crowd Control"]}
+              />
+            </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
               Eliminate crowd congestion during device collection using tokens, QR codes, and digital queues.
             </p>
