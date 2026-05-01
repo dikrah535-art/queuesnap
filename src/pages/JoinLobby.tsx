@@ -113,6 +113,14 @@ const JoinLobby = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
         <div className="container flex h-16 items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/checkin"))}
+            aria-label="Back"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back
+          </Button>
           <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
         </div>
       </header>
