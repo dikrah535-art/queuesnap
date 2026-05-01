@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CheckIn from "./pages/CheckIn";
+import LobbyChooser from "./pages/LobbyChooser";
 import Receipt from "./pages/Receipt";
 import Status from "./pages/Status";
 import AdminLogin from "./pages/AdminLogin";
