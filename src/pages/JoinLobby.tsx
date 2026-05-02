@@ -162,7 +162,17 @@ const JoinLobby = () => {
           </div>
 
           {myEntry ? (
-            <div className="mt-6 rounded-xl border border-border bg-card p-5 text-center">
+            <div className={`mt-6 rounded-xl border p-5 text-center transition-colors ${ringing ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+              {ringing && (
+                <div className="mb-4 rounded-lg bg-primary/10 p-3">
+                  <Bell className="mx-auto h-8 w-8 text-primary animate-bounce" />
+                  <p className="mt-2 font-semibold text-primary">📞 You are being called!</p>
+                  <p className="text-xs text-muted-foreground">Please proceed to the counter.</p>
+                  <Button variant="destructive" size="sm" className="mt-3" onClick={stopRing}>
+                    <BellOff className="mr-1 h-4 w-4" /> Stop ring
+                  </Button>
+                </div>
+              )}
               {myEntry.status === "serving" ? (
                 <>
                   <Bell className="mx-auto h-10 w-10 text-primary animate-pulse" />
