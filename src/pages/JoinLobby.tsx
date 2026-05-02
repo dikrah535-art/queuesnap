@@ -64,6 +64,30 @@ const JoinLobby = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyId]);
 
+  // Listen for targeted "ring" broadcasts from the lobby admin.
+  // We only react when the broadcast's entryId matches *our* entry — so
+  // other participants never hear someone else's ring.
+  useEffect(() => {
+    if (!lobbyId || !myEntry?.id) return;
+    const myId = myEntry.id;
+    const ch = supabase.channel(`ring-${lobbyId}`, { config: { broadcast: { self: false } } });
+    ch.on("broadcast", { event: "ring" }, ({ payload }) => {
+      if (payload?.entryId === myId) {
+        startRing();
+        toast.success("You are being called — please proceed!");
+      }
+    });
+    ch.on("broadcast", { event: "stop" }, ({ payload }) => {
+      if (payload?.entryId === myId) stopRing();
+    });
+    ch.subscribe();
+    return () => {
+      stopRing();
+      supabase.removeChannel(ch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobbyId, myEntry?.id]);
+
   const position = useMemo(() => {
     if (!myEntry) return 0;
     if (myEntry.status === "serving") return 0;
