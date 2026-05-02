@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, Check, Loader2, LogIn, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Check, Loader2, LogIn, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRingTone } from "@/lib/useRingTone";
 import {
   cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, rememberAnonEntry,
@@ -25,6 +26,7 @@ const JoinLobby = () => {
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
+  const { ringing, start: startRing, stop: stopRing } = useRingTone();
 
   const reload = async () => {
     if (!lobbyId) return;
@@ -61,6 +63,30 @@ const JoinLobby = () => {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyId]);
+
+  // Listen for targeted "ring" broadcasts from the lobby admin.
+  // We only react when the broadcast's entryId matches *our* entry — so
+  // other participants never hear someone else's ring.
+  useEffect(() => {
+    if (!lobbyId || !myEntry?.id) return;
+    const myId = myEntry.id;
+    const ch = supabase.channel(`ring-${lobbyId}`, { config: { broadcast: { self: false } } });
+    ch.on("broadcast", { event: "ring" }, ({ payload }) => {
+      if (payload?.entryId === myId) {
+        startRing();
+        toast.success("You are being called — please proceed!");
+      }
+    });
+    ch.on("broadcast", { event: "stop" }, ({ payload }) => {
+      if (payload?.entryId === myId) stopRing();
+    });
+    ch.subscribe();
+    return () => {
+      stopRing();
+      supabase.removeChannel(ch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobbyId, myEntry?.id]);
 
   const position = useMemo(() => {
     if (!myEntry) return 0;
@@ -136,7 +162,17 @@ const JoinLobby = () => {
           </div>
 
           {myEntry ? (
-            <div className="mt-6 rounded-xl border border-border bg-card p-5 text-center">
+            <div className={`mt-6 rounded-xl border p-5 text-center transition-colors ${ringing ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+              {ringing && (
+                <div className="mb-4 rounded-lg bg-primary/10 p-3">
+                  <Bell className="mx-auto h-8 w-8 text-primary animate-bounce" />
+                  <p className="mt-2 font-semibold text-primary">📞 You are being called!</p>
+                  <p className="text-xs text-muted-foreground">Please proceed to the counter.</p>
+                  <Button variant="destructive" size="sm" className="mt-3" onClick={stopRing}>
+                    <BellOff className="mr-1 h-4 w-4" /> Stop ring
+                  </Button>
+                </div>
+              )}
               {myEntry.status === "serving" ? (
                 <>
                   <Bell className="mx-auto h-10 w-10 text-primary animate-pulse" />

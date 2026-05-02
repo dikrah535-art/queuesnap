@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bell, BellOff, Check, Copy, Loader2, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
-import { useRingTone } from "@/lib/useRingTone";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,16 +22,25 @@ const LobbyManage = () => {
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
   const [search, setSearch] = useState("");
-  const { ringing, start: startRing, stop: stopRing } = useRingTone();
   const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
+  const ringChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Broadcast a ring event targeted at one specific queue entry.
+  // Only the participant device (JoinLobby) matching that entry id will
+  // play the ring tone — the admin/owner never hears it locally.
+  const sendRingEvent = (entryId: string, action: "ring" | "stop") => {
+    const ch = ringChannelRef.current;
+    if (!ch) { toast.error("Not connected — try again in a moment"); return; }
+    ch.send({ type: "broadcast", event: action, payload: { entryId } });
+  };
 
   const onRing = (entryId: string, name: string) => {
     setRingingEntryId(entryId);
-    startRing();
-    toast.success(`Ringing ${name}…`);
+    sendRingEvent(entryId, "ring");
+    toast.success(`Ringing ${name}'s device…`);
   };
   const onStopRing = () => {
-    stopRing();
+    if (ringingEntryId) sendRingEvent(ringingEntryId, "stop");
     setRingingEntryId(null);
     toast.success("Ring stopped");
   };
@@ -61,6 +69,19 @@ const LobbyManage = () => {
   const serving = useMemo(() => entries.find((e) => e.status === "serving"), [entries]);
   const waiting = useMemo(() => entries.filter((e) => e.status === "waiting"), [entries]);
 
+  // Set up a dedicated broadcast channel to send ring events to the
+  // participant device. Kept separate from the postgres_changes channel.
+  useEffect(() => {
+    if (!lobbyId) return;
+    const ch = supabase.channel(`ring-${lobbyId}`, { config: { broadcast: { self: false } } });
+    ch.subscribe();
+    ringChannelRef.current = ch;
+    return () => {
+      ringChannelRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [lobbyId]);
+
   // Auto-stop ring if the ringing entry leaves the active queue (collected/cancelled)
   useEffect(() => {
     if (!ringingEntryId) return;
@@ -68,7 +89,7 @@ const LobbyManage = () => {
       (e) => e.id === ringingEntryId && (e.status === "serving" || e.status === "waiting"),
     );
     if (!stillActive) {
-      stopRing();
+      sendRingEvent(ringingEntryId, "stop");
       setRingingEntryId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -253,7 +274,7 @@ const LobbyManage = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {ringingEntryId === e.id && ringing ? (
+                      {ringingEntryId === e.id ? (
                         <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
                           <BellOff className="h-4 w-4 sm:mr-1" />
                           <span className="hidden sm:inline">Stop ring</span>
