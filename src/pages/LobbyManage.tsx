@@ -69,6 +69,19 @@ const LobbyManage = () => {
   const serving = useMemo(() => entries.find((e) => e.status === "serving"), [entries]);
   const waiting = useMemo(() => entries.filter((e) => e.status === "waiting"), [entries]);
 
+  // Set up a dedicated broadcast channel to send ring events to the
+  // participant device. Kept separate from the postgres_changes channel.
+  useEffect(() => {
+    if (!lobbyId) return;
+    const ch = supabase.channel(`ring-${lobbyId}`, { config: { broadcast: { self: false } } });
+    ch.subscribe();
+    ringChannelRef.current = ch;
+    return () => {
+      ringChannelRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [lobbyId]);
+
   // Auto-stop ring if the ringing entry leaves the active queue (collected/cancelled)
   useEffect(() => {
     if (!ringingEntryId) return;
@@ -76,7 +89,7 @@ const LobbyManage = () => {
       (e) => e.id === ringingEntryId && (e.status === "serving" || e.status === "waiting"),
     );
     if (!stillActive) {
-      stopRing();
+      sendRingEvent(ringingEntryId, "stop");
       setRingingEntryId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
