@@ -26,6 +26,7 @@ const JoinLobby = () => {
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
+  const { ringing, start: startRing, stop: stopRing } = useRingTone();
 
   const reload = async () => {
     if (!lobbyId) return;
