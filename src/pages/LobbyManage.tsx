@@ -274,7 +274,7 @@ const LobbyManage = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {ringingEntryId === e.id && ringing ? (
+                      {ringingEntryId === e.id ? (
                         <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
                           <BellOff className="h-4 w-4 sm:mr-1" />
                           <span className="hidden sm:inline">Stop ring</span>
