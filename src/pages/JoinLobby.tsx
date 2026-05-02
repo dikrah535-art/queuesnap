@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, Check, Loader2, LogIn, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Check, Loader2, LogIn, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRingTone } from "@/lib/useRingTone";
 import {
   cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, rememberAnonEntry,
