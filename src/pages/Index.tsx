@@ -27,7 +27,7 @@ const Index = () => {
           <nav className="flex items-center gap-1">
             <Button asChild variant="ghost" size="sm"><Link to="/status">Status</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/workspaces">Workspaces</Link></Button>
-            <Button asChild variant="ghost" size="sm"><Link to="/admin/login">Sign in</Link></Button>
+            <Button asChild variant="default" size="sm"><Link to="/admin/login?next=/workspaces">Admin</Link></Button>
           </nav>
         </div>
       </header>
