@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      demo_visitors: {
+        Row: {
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          queue_entry_id: string | null
+          source: string
+          visited_at: string
+        }
+        Insert: {
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          queue_entry_id?: string | null
+          source?: string
+          visited_at?: string
+        }
+        Update: {
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          queue_entry_id?: string | null
+          source?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           called_time: string | null
@@ -90,6 +120,7 @@ export type Database = {
           id: string
           max_capacity: number
           name: string
+          slug: string | null
           status: Database["public"]["Enums"]["lobby_status"]
           updated_at: string
           workspace_id: string
@@ -101,6 +132,7 @@ export type Database = {
           id?: string
           max_capacity?: number
           name: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["lobby_status"]
           updated_at?: string
           workspace_id: string
@@ -112,6 +144,7 @@ export type Database = {
           id?: string
           max_capacity?: number
           name?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["lobby_status"]
           updated_at?: string
           workspace_id?: string
@@ -151,9 +184,12 @@ export type Database = {
         Row: {
           created_at: string
           device_type: string | null
+          email: string | null
           id: string
+          is_vip: boolean
           lobby_id: string
           name: string
+          notified_email: boolean
           phone: string | null
           position: number
           served_at: string | null
@@ -163,9 +199,12 @@ export type Database = {
         Insert: {
           created_at?: string
           device_type?: string | null
+          email?: string | null
           id?: string
+          is_vip?: boolean
           lobby_id: string
           name: string
+          notified_email?: boolean
           phone?: string | null
           position: number
           served_at?: string | null
@@ -175,9 +214,12 @@ export type Database = {
         Update: {
           created_at?: string
           device_type?: string | null
+          email?: string | null
           id?: string
+          is_vip?: boolean
           lobby_id?: string
           name?: string
+          notified_email?: boolean
           phone?: string | null
           position?: number
           served_at?: string | null
@@ -323,6 +365,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_add_entry: {
+        Args: {
+          _device_type?: string
+          _email?: string
+          _is_vip?: boolean
+          _lobby_id: string
+          _name: string
+          _phone?: string
+        }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          email: string | null
+          id: string
+          is_vip: boolean
+          lobby_id: string
+          name: string
+          notified_email: boolean
+          phone: string | null
+          position: number
+          served_at: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       assign_next_slot: {
         Args: never
         Returns: {
@@ -331,14 +404,18 @@ export type Database = {
         }[]
       }
       clear_queue: { Args: { _lobby_id: string }; Returns: number }
+      count_demo_waiting: { Args: never; Returns: number }
       fetch_lobby_entries_admin: {
         Args: { _include_all?: boolean; _lobby_id: string }
         Returns: {
           created_at: string
           device_type: string | null
+          email: string | null
           id: string
+          is_vip: boolean
           lobby_id: string
           name: string
+          notified_email: boolean
           phone: string | null
           position: number
           served_at: string | null
@@ -377,9 +454,12 @@ export type Database = {
             Returns: {
               created_at: string
               device_type: string | null
+              email: string | null
               id: string
+              is_vip: boolean
               lobby_id: string
               name: string
+              notified_email: boolean
               phone: string | null
               position: number
               served_at: string | null
@@ -404,9 +484,12 @@ export type Database = {
             Returns: {
               created_at: string
               device_type: string | null
+              email: string | null
               id: string
+              is_vip: boolean
               lobby_id: string
               name: string
+              notified_email: boolean
               phone: string | null
               position: number
               served_at: string | null
@@ -438,9 +521,12 @@ export type Database = {
         Returns: {
           created_at: string
           device_type: string | null
+          email: string | null
           id: string
+          is_vip: boolean
           lobby_id: string
           name: string
+          notified_email: boolean
           phone: string | null
           position: number
           served_at: string | null
@@ -455,14 +541,18 @@ export type Database = {
         }
       }
       queue_position: { Args: { _id: string; _token: string }; Returns: number }
+      resolve_lobby: { Args: { _key: string }; Returns: string }
       serve_next: {
         Args: { _lobby_id: string }
         Returns: {
           created_at: string
           device_type: string | null
+          email: string | null
           id: string
+          is_vip: boolean
           lobby_id: string
           name: string
+          notified_email: boolean
           phone: string | null
           position: number
           served_at: string | null
