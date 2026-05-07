@@ -26,7 +26,33 @@ const JoinLobby = () => {
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
   const { ringing, start: startRing, stop: stopRing } = useRingTone();
+
+  // Ask for browser notification permission once on mount
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  // Fire a browser notification when *my* entry transitions to "serving"
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    const curr = myEntry?.status ?? null;
+    if (prev !== "serving" && curr === "serving") {
+      try {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("🔔 It's your turn!", {
+            body: "Your token is now being called. Please proceed to the counter.",
+            icon: "/favicon.ico",
+          });
+        }
+      } catch { /* ignore */ }
+    }
+    prevStatusRef.current = curr;
+  }, [myEntry?.status]);
 
   const reload = async () => {
     if (!lobbyId) return;
