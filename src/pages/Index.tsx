@@ -21,6 +21,23 @@ const useCases = [
 ];
 
 const Index = () => {
+  const [demoCount, setDemoCount] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const n = await fetchDemoWaitingCount();
+      if (!cancelled) setDemoCount(n);
+    };
+    load();
+    const ch = supabase
+      .channel("demo-counter")
+      .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries" }, () => load())
+      .subscribe();
+    const t = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
