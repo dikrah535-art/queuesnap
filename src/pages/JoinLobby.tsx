@@ -80,6 +80,19 @@ const JoinLobby = () => {
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
   };
+  // Resolve slug like "demo" → real lobby UUID
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lobbyKey) { setLoading(false); return; }
+      const id = await resolveLobbyKey(lobbyKey);
+      if (cancelled) return;
+      if (!id) { setLoading(false); toast.error("Lobby not found"); return; }
+      setLobbyId(id);
+    })();
+    return () => { cancelled = true; };
+  }, [lobbyKey]);
+
   useEffect(() => { reload(); }, [lobbyId]);
 
   useEffect(() => {
