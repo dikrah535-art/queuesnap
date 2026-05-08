@@ -23,6 +23,11 @@ const LobbyManage = () => {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addPhone, setAddPhone] = useState("");
+  const [addVip, setAddVip] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [shareModal, setShareModal] = useState<{ entry: QueueEntry; url: string } | null>(null);
   const [search, setSearch] = useState("");
   const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
   const ringChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
