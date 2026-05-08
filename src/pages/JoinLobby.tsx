@@ -30,7 +30,7 @@ const JoinLobby = () => {
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
   const prevStatusRef = useRef<string | null>(null);
   const { ringing, start: startRing, stop: stopRing } = useRingTone();
-  const isDemo = lobbyKey === "demo" || lobby?.slug === "demo" as never;
+  const isDemo = lobbyKey === "demo" || lobby?.slug === "demo";
 
   // Ask for browser notification permission once on mount
   useEffect(() => {
