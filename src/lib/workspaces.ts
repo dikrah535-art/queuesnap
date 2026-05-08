@@ -33,6 +33,9 @@ export interface QueueEntry {
   user_id: string | null;
   name: string;
   phone: string | null;
+  email?: string | null;
+  is_vip?: boolean;
+  notified_email?: boolean;
   device_type: string | null;
   position: number;
   status: QueueEntryStatus;
