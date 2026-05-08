@@ -249,8 +249,15 @@ const JoinLobby = () => {
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80}
                   placeholder="Enter your name" disabled={closed || full} />
               </div>
+              {isDemo && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">Get notified when it's your turn <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120}
+                    placeholder="you@example.com" disabled={closed || full} autoComplete="email" />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone number</Label>
+                <Label htmlFor="phone">Phone number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={32}
                   placeholder="e.g. +91 98765 43210" disabled={closed || full} autoComplete="tel" />
               </div>
