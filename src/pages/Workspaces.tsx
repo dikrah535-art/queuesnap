@@ -155,10 +155,14 @@ const Workspaces = () => {
             </Button>
             <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
           </div>
-          <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button variant="hero" size="sm"><Plus className="mr-1" /> New workspace</Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/admin/demo-visitors">Demo Visitors</Link>
+            </Button>
+            <Dialog open={open} onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button variant="hero" size="sm"><Plus className="mr-1" /> New workspace</Button>
+              </DialogTrigger>
             <DialogContent className="animate-scale-in max-w-lg">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
