@@ -11,23 +11,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
 import {
   cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
-  joinLobby, rememberAnonEntry,
+  joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 
 const JoinLobby = () => {
   const navigate = useNavigate();
-  const { lobbyId } = useParams<{ lobbyId: string }>();
+  const { lobbyId: lobbyKey } = useParams<{ lobbyId: string }>();
+  const [lobbyId, setLobbyId] = useState<string | null>(null);
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
   const prevStatusRef = useRef<string | null>(null);
   const { ringing, start: startRing, stop: stopRing } = useRingTone();
+  const isDemo = lobbyKey === "demo" || lobby?.slug === "demo" as never;
 
   // Ask for browser notification permission once on mount
   useEffect(() => {
