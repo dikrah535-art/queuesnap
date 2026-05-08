@@ -295,3 +295,70 @@ export async function getMyRole(workspaceId: string): Promise<WorkspaceRole | nu
     .maybeSingle();
   return (data?.role as WorkspaceRole) ?? null;
 }
+
+// ---- Demo lobby helpers ----
+export async function resolveLobbyKey(key: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("resolve_lobby", { _key: key } as never);
+  if (error) return null;
+  return (data as string | null) ?? null;
+}
+
+export async function fetchDemoWaitingCount(): Promise<number> {
+  const { data, error } = await supabase.rpc("count_demo_waiting" as never);
+  if (error) return 0;
+  return (data as number) ?? 0;
+}
+
+export async function recordDemoVisitor(input: {
+  name: string; email?: string | null; phone?: string | null; queueEntryId?: string | null;
+}) {
+  const { error } = await supabase.from("demo_visitors").insert({
+    name: input.name.trim(),
+    email: input.email?.trim() || null,
+    phone: input.phone?.trim() || null,
+    queue_entry_id: input.queueEntryId ?? null,
+    source: "landing_page",
+  } as never);
+  if (error) console.warn("demo visitor insert failed", error);
+}
+
+export interface DemoVisitor {
+  id: string; name: string; email: string | null; phone: string | null;
+  queue_entry_id: string | null; visited_at: string; source: string;
+}
+export async function fetchDemoVisitors(): Promise<DemoVisitor[]> {
+  const { data, error } = await supabase
+    .from("demo_visitors")
+    .select("*")
+    .order("visited_at", { ascending: false })
+    .limit(1000);
+  if (error) throw error;
+  return (data ?? []) as DemoVisitor[];
+}
+
+// ---- Admin manual add (with email + VIP) ----
+export async function adminAddEntry(input: {
+  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string; isVip?: boolean;
+}) {
+  const { data, error } = await supabase.rpc("admin_add_entry", {
+    _lobby_id: input.lobbyId,
+    _name: input.name,
+    _phone: input.phone ?? null,
+    _email: input.email ?? null,
+    _device_type: input.deviceType ?? null,
+    _is_vip: input.isVip ?? false,
+  } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function sendTokenEmail(input: {
+  email: string; name: string; tokenNumber: number; queueName: string; tokenUrl: string;
+}) {
+  const { error } = await supabase.functions.invoke("notify-email", { body: input });
+  if (error) throw error;
+}
+
+export async function markNotified(entryId: string) {
+  await supabase.from("queue_entries").update({ notified_email: true } as never).eq("id", entryId);
+}
