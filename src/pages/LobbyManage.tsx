@@ -368,6 +368,38 @@ const LobbyManage = () => {
           })()}
         </Card>
       </main>
+
+      <Dialog open={!!shareModal} onOpenChange={(o) => !o && setShareModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Token #{shareModal?.entry.position} assigned to {shareModal?.entry.name}</DialogTitle>
+            <DialogDescription>
+              No email was provided — share the token link directly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg bg-muted p-3 text-xs font-mono break-all">{shareModal?.url}</div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (!shareModal) return;
+                try { await navigator.clipboard.writeText(shareModal.url); toast.success("Link copied"); }
+                catch { toast.error("Could not copy"); }
+              }}
+            >
+              <Copy className="mr-1 h-4 w-4" /> Copy link
+            </Button>
+            <Button asChild>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Your token is #${shareModal?.entry.position} — track here: ${shareModal?.url}`)}`}
+                target="_blank" rel="noreferrer"
+              >
+                <MessageCircle className="mr-1 h-4 w-4" /> Share via WhatsApp
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
