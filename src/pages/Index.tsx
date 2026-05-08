@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlowDemo } from "@/components/FlowDemo";
 import { Reveal } from "@/components/Reveal";
 import { Typewriter } from "@/components/Typewriter";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchDemoWaitingCount } from "@/lib/workspaces";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
@@ -18,6 +21,23 @@ const useCases = [
 ];
 
 const Index = () => {
+  const [demoCount, setDemoCount] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const n = await fetchDemoWaitingCount();
+      if (!cancelled) setDemoCount(n);
+    };
+    load();
+    const ch = supabase
+      .channel("demo-counter")
+      .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries" }, () => load())
+      .subscribe();
+    const t = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -80,6 +100,31 @@ const Index = () => {
       <div className="animate-fade-in">
         <FlowDemo />
       </div>
+
+      {/* Try It Live - Demo lobby */}
+      <section className="container py-16 md:py-20">
+        <Reveal className="mx-auto max-w-2xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-10 md:p-14 shadow-elegant">
+          <span className="inline-block text-xs font-medium uppercase tracking-wider text-primary">See It In Action</span>
+          <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">Try the live demo</h2>
+          <p className="mt-3 text-muted-foreground">
+            Join our live demo queue and experience QueueSnap as a real user would.
+          </p>
+          <div className="mt-7">
+            <Button asChild variant="hero" size="lg" className="min-w-[240px]">
+              <Link to="/join/demo">Join Demo Queue <ArrowRight /></Link>
+            </Button>
+          </div>
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm text-primary">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            <span className="font-medium tabular-nums">{demoCount}</span>
+            <span className="text-primary/80">people in demo queue right now</span>
+          </div>
+        </Reveal>
+      </section>
+
 
       {/* Trust / Use case */}
       {/* Problem & Vision */}

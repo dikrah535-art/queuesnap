@@ -11,23 +11,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
 import {
   cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
-  joinLobby, rememberAnonEntry,
+  joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 
 const JoinLobby = () => {
   const navigate = useNavigate();
-  const { lobbyId } = useParams<{ lobbyId: string }>();
+  const { lobbyId: lobbyKey } = useParams<{ lobbyId: string }>();
+  const [lobbyId, setLobbyId] = useState<string | null>(null);
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
   const prevStatusRef = useRef<string | null>(null);
   const { ringing, start: startRing, stop: stopRing } = useRingTone();
+  const isDemo = lobbyKey === "demo" || lobby?.slug === "demo";
 
   // Ask for browser notification permission once on mount
   useEffect(() => {
@@ -77,6 +80,19 @@ const JoinLobby = () => {
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
   };
+  // Resolve slug like "demo" → real lobby UUID
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lobbyKey) { setLoading(false); return; }
+      const id = await resolveLobbyKey(lobbyKey);
+      if (cancelled) return;
+      if (!id) { setLoading(false); toast.error("Lobby not found"); return; }
+      setLobbyId(id);
+    })();
+    return () => { cancelled = true; };
+  }, [lobbyKey]);
+
   useEffect(() => { reload(); }, [lobbyId]);
 
   useEffect(() => {
@@ -134,6 +150,14 @@ const JoinLobby = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
       setMyEntry(entry);
+      if (isDemo) {
+        await recordDemoVisitor({
+          name: name.trim(),
+          email: email.trim() || null,
+          phone: phone.trim() || null,
+          queueEntryId: entry.id,
+        });
+      }
       toast.success("Successfully added to queue");
     } catch (e: any) {
       const msg = e?.message ?? "Failed to join";
@@ -225,8 +249,15 @@ const JoinLobby = () => {
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80}
                   placeholder="Enter your name" disabled={closed || full} />
               </div>
+              {isDemo && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">Get notified when it's your turn <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120}
+                    placeholder="you@example.com" disabled={closed || full} autoComplete="email" />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone number</Label>
+                <Label htmlFor="phone">Phone number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={32}
                   placeholder="e.g. +91 98765 43210" disabled={closed || full} autoComplete="tel" />
               </div>

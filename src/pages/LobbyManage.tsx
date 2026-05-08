@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Check, Copy, Loader2, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Check, Copy, Crown, Loader2, Mail, MessageCircle, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QrCard } from "@/components/workspace/QrCard";
 import {
-  cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
-  markCollected, serveNext, updateLobby, joinLobby,
+  adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
+  markCollected, markNotified, sendTokenEmail, serveNext, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 
@@ -21,6 +23,11 @@ const LobbyManage = () => {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addPhone, setAddPhone] = useState("");
+  const [addVip, setAddVip] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [shareModal, setShareModal] = useState<{ entry: QueueEntry; url: string } | null>(null);
   const [search, setSearch] = useState("");
   const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
   const ringChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -118,9 +125,44 @@ const LobbyManage = () => {
   };
 
   const onAdd = async () => {
-    if (!lobbyId || !addName.trim()) return;
-    try { await joinLobby(lobbyId, addName); setAddName(""); toast.success("Added to queue"); }
-    catch (e: any) { toast.error(e.message ?? "Failed to add"); }
+    if (!lobbyId || !addName.trim() || !lobby) return;
+    if (addEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addEmail.trim())) {
+      toast.error("Enter a valid email"); return;
+    }
+    setAdding(true);
+    try {
+      const entry = await adminAddEntry({
+        lobbyId,
+        name: addName,
+        email: addEmail.trim() || undefined,
+        phone: addPhone.trim() || undefined,
+        isVip: addVip,
+      });
+      const tokenUrl = `${window.location.origin}/join/${lobby.slug ?? lobbyId}`;
+      toast.success(`Token #${entry.position} assigned to ${entry.name}`);
+
+      if (addEmail.trim()) {
+        try {
+          await sendTokenEmail({
+            email: addEmail.trim(),
+            name: entry.name,
+            tokenNumber: entry.position,
+            queueName: lobby.name,
+            tokenUrl,
+          });
+          await markNotified(entry.id);
+          toast.success(`Email sent to ${addEmail.trim()}`);
+        } catch (e: any) {
+          toast.error(`Email failed: ${e.message ?? "unknown"}`);
+        }
+      } else {
+        setShareModal({ entry, url: tokenUrl });
+      }
+
+      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to add");
+    } finally { setAdding(false); }
   };
 
   const onRemove = async (id: string) => {
@@ -197,22 +239,38 @@ const LobbyManage = () => {
           </Card>
         </div>
 
-        {/* Actions */}
+        {/* Add person */}
         <Card className="p-5">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px] space-y-2">
-              <Label>Add person manually</Label>
-              <div className="flex gap-2">
-                <Input placeholder="Name" value={addName} onChange={(e) => setAddName(e.target.value)} maxLength={80} />
-                <Button onClick={onAdd} disabled={!addName.trim()}>Add</Button>
+          <h3 className="mb-3 font-semibold">Add person manually</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-name">Name <span className="text-destructive">*</span></Label>
+              <Input id="add-name" placeholder="Full name" value={addName} onChange={(e) => setAddName(e.target.value)} maxLength={80} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-email">Email <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-email" type="email" placeholder="person@example.com" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} maxLength={120} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-phone" type="tel" placeholder="+1 555…" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+                <Crown className={`h-4 w-4 ${addVip ? "text-amber-500" : "text-muted-foreground"}`} />
+                <Label htmlFor="add-vip" className="cursor-pointer text-sm">VIP priority</Label>
+                <Switch id="add-vip" checked={addVip} onCheckedChange={setAddVip} />
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="hero" onClick={onServeNext} disabled={waiting.length === 0 && !serving}>
-                <PlayCircle className="mr-1" /> Serve next
+              <Button onClick={onAdd} disabled={!addName.trim() || adding} className="ml-auto">
+                {adding ? <Loader2 className="animate-spin" /> : "Add"}
               </Button>
-              <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
             </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+            <Button variant="hero" onClick={onServeNext} disabled={waiting.length === 0 && !serving}>
+              <PlayCircle className="mr-1" /> Serve next
+            </Button>
+            <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
           </div>
         </Card>
 
@@ -258,7 +316,17 @@ const LobbyManage = () => {
                         {e.position}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-medium leading-tight truncate">{e.name}</p>
+                        <p className="font-medium leading-tight truncate flex items-center gap-1.5">
+                          {e.name}
+                          {e.is_vip && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600" title="VIP">
+                              <Crown className="h-3 w-3" /> VIP
+                            </span>
+                          )}
+                          {e.notified_email && (
+                            <Mail className="h-3 w-3 text-primary" aria-label="Notified by email" />
+                          )}
+                        </p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {e.status === "serving" ? (
                             <span className="inline-flex items-center gap-1 text-primary">
@@ -300,6 +368,38 @@ const LobbyManage = () => {
           })()}
         </Card>
       </main>
+
+      <Dialog open={!!shareModal} onOpenChange={(o) => !o && setShareModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Token #{shareModal?.entry.position} assigned to {shareModal?.entry.name}</DialogTitle>
+            <DialogDescription>
+              No email was provided — share the token link directly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg bg-muted p-3 text-xs font-mono break-all">{shareModal?.url}</div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (!shareModal) return;
+                try { await navigator.clipboard.writeText(shareModal.url); toast.success("Link copied"); }
+                catch { toast.error("Could not copy"); }
+              }}
+            >
+              <Copy className="mr-1 h-4 w-4" /> Copy link
+            </Button>
+            <Button asChild>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Your token is #${shareModal?.entry.position} — track here: ${shareModal?.url}`)}`}
+                target="_blank" rel="noreferrer"
+              >
+                <MessageCircle className="mr-1 h-4 w-4" /> Share via WhatsApp
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
