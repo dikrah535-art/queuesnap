@@ -316,7 +316,17 @@ const LobbyManage = () => {
                         {e.position}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-medium leading-tight truncate">{e.name}</p>
+                        <p className="font-medium leading-tight truncate flex items-center gap-1.5">
+                          {e.name}
+                          {e.is_vip && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600" title="VIP">
+                              <Crown className="h-3 w-3" /> VIP
+                            </span>
+                          )}
+                          {e.notified_email && (
+                            <Mail className="h-3 w-3 text-primary" aria-label="Notified by email" />
+                          )}
+                        </p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {e.status === "serving" ? (
                             <span className="inline-flex items-center gap-1 text-primary">
