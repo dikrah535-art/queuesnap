@@ -55,6 +55,7 @@ const App = () => (
           <Route path="/workspaces/:wsId/admins" element={<WorkspaceAuthGate><WorkspaceAdmins /></WorkspaceAuthGate>} />
           <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
           <Route path="/join/:lobbyId" element={<JoinLobby />} />
+          <Route path="/admin/demo-visitors" element={<WorkspaceAuthGate><AdminDemoVisitors /></WorkspaceAuthGate>} />
           <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
