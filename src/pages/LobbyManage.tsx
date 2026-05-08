@@ -125,9 +125,44 @@ const LobbyManage = () => {
   };
 
   const onAdd = async () => {
-    if (!lobbyId || !addName.trim()) return;
-    try { await joinLobby(lobbyId, addName); setAddName(""); toast.success("Added to queue"); }
-    catch (e: any) { toast.error(e.message ?? "Failed to add"); }
+    if (!lobbyId || !addName.trim() || !lobby) return;
+    if (addEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addEmail.trim())) {
+      toast.error("Enter a valid email"); return;
+    }
+    setAdding(true);
+    try {
+      const entry = await adminAddEntry({
+        lobbyId,
+        name: addName,
+        email: addEmail.trim() || undefined,
+        phone: addPhone.trim() || undefined,
+        isVip: addVip,
+      });
+      const tokenUrl = `${window.location.origin}/join/${lobby.slug ?? lobbyId}`;
+      toast.success(`Token #${entry.position} assigned to ${entry.name}`);
+
+      if (addEmail.trim()) {
+        try {
+          await sendTokenEmail({
+            email: addEmail.trim(),
+            name: entry.name,
+            tokenNumber: entry.position,
+            queueName: lobby.name,
+            tokenUrl,
+          });
+          await markNotified(entry.id);
+          toast.success(`Email sent to ${addEmail.trim()}`);
+        } catch (e: any) {
+          toast.error(`Email failed: ${e.message ?? "unknown"}`);
+        }
+      } else {
+        setShareModal({ entry, url: tokenUrl });
+      }
+
+      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to add");
+    } finally { setAdding(false); }
   };
 
   const onRemove = async (id: string) => {
