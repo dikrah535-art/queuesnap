@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Check, Copy, Loader2, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Check, Copy, Crown, Loader2, Mail, MessageCircle, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QrCard } from "@/components/workspace/QrCard";
 import {
-  cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
-  markCollected, serveNext, updateLobby, joinLobby,
+  adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
+  markCollected, markNotified, sendTokenEmail, serveNext, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 
