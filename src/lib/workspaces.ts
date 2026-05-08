@@ -20,6 +20,7 @@ export interface Lobby {
   workspace_id: string;
   name: string;
   description: string | null;
+  slug?: string | null;
   max_capacity: number;
   status: LobbyStatus;
   created_by: string;
