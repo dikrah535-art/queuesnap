@@ -239,22 +239,38 @@ const LobbyManage = () => {
           </Card>
         </div>
 
-        {/* Actions */}
+        {/* Add person */}
         <Card className="p-5">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px] space-y-2">
-              <Label>Add person manually</Label>
-              <div className="flex gap-2">
-                <Input placeholder="Name" value={addName} onChange={(e) => setAddName(e.target.value)} maxLength={80} />
-                <Button onClick={onAdd} disabled={!addName.trim()}>Add</Button>
+          <h3 className="mb-3 font-semibold">Add person manually</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-name">Name <span className="text-destructive">*</span></Label>
+              <Input id="add-name" placeholder="Full name" value={addName} onChange={(e) => setAddName(e.target.value)} maxLength={80} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-email">Email <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-email" type="email" placeholder="person@example.com" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} maxLength={120} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-phone" type="tel" placeholder="+1 555…" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+                <Crown className={`h-4 w-4 ${addVip ? "text-amber-500" : "text-muted-foreground"}`} />
+                <Label htmlFor="add-vip" className="cursor-pointer text-sm">VIP priority</Label>
+                <Switch id="add-vip" checked={addVip} onCheckedChange={setAddVip} />
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="hero" onClick={onServeNext} disabled={waiting.length === 0 && !serving}>
-                <PlayCircle className="mr-1" /> Serve next
+              <Button onClick={onAdd} disabled={!addName.trim() || adding} className="ml-auto">
+                {adding ? <Loader2 className="animate-spin" /> : "Add"}
               </Button>
-              <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
             </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+            <Button variant="hero" onClick={onServeNext} disabled={waiting.length === 0 && !serving}>
+              <PlayCircle className="mr-1" /> Serve next
+            </Button>
+            <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
           </div>
         </Card>
 
