@@ -20,6 +20,7 @@ import WorkspaceDetail from "./pages/WorkspaceDetail";
 import WorkspaceAdmins from "./pages/WorkspaceAdmins";
 import LobbyManage from "./pages/LobbyManage";
 import JoinLobby from "./pages/JoinLobby";
+import AdminDemoVisitors from "./pages/AdminDemoVisitors";
 import { AdminGuard } from "./components/AdminGuard";
 import { WorkspaceAuthGate } from "./components/workspace/WorkspaceAuthGate";
 import { RecoveryWatcher } from "./components/RecoveryWatcher";
