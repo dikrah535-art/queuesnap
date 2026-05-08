@@ -150,6 +150,14 @@ const JoinLobby = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
       setMyEntry(entry);
+      if (isDemo) {
+        await recordDemoVisitor({
+          name: name.trim(),
+          email: email.trim() || null,
+          phone: phone.trim() || null,
+          queueEntryId: entry.id,
+        });
+      }
       toast.success("Successfully added to queue");
     } catch (e: any) {
       const msg = e?.message ?? "Failed to join";
