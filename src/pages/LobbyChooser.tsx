@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Loader2, QrCode, ScanLine, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, QrCode, ScanLine, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
 import { fetchLobby } from "@/lib/workspaces";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DEMO_LOBBY_ID,
+  DEMO_LOBBY_NAME,
+  DEMO_LOBBY_DESCRIPTION,
+  DEMO_LOBBY_PATH,
+  fetchDemoLobbyWaitingCount,
+} from "@/lib/demoLobby";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
