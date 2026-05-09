@@ -134,9 +134,9 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Visual flow + queue simulation */}
+      {/* How it works (upgraded) */}
       <div className="animate-fade-in">
-        <FlowDemo />
+        <HowItWorks />
       </div>
 
       {/* Try It Live - Demo lobby */}
