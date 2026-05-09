@@ -41,6 +41,26 @@ const LobbyChooser = () => {
   const [checking, setChecking] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demoCount, setDemoCount] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const n = await fetchDemoLobbyWaitingCount();
+      if (!cancelled) setDemoCount(n);
+    };
+    load();
+    const ch = supabase
+      .channel("lobby-chooser-demo")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "queue_entries", filter: `lobby_id=eq.${DEMO_LOBBY_ID}` },
+        () => load()
+      )
+      .subscribe();
+    const t = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
+  }, []);
 
   const goToLobby = async (rawId: string) => {
     const id = extractLobbyId(rawId);
