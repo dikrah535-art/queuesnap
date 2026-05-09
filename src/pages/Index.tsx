@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FlowDemo } from "@/components/FlowDemo";
+import { HowItWorks } from "@/components/HowItWorks";
 import { Reveal } from "@/components/Reveal";
 import { Typewriter } from "@/components/Typewriter";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,8 +38,8 @@ const Index = () => {
     };
     load();
     const ch = supabase
-      .channel("demo-counter")
-      .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries" }, () => load())
+      .channel(`demo-counter-${DEMO_LOBBY_ID}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries", filter: `lobby_id=eq.${DEMO_LOBBY_ID}` }, () => load())
       .subscribe();
     const t = setInterval(load, 15000);
     return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
@@ -134,9 +134,9 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Visual flow + queue simulation */}
+      {/* How it works (upgraded) */}
       <div className="animate-fade-in">
-        <FlowDemo />
+        <HowItWorks />
       </div>
 
       {/* Try It Live - Demo lobby */}
