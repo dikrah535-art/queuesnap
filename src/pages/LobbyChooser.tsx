@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Loader2, QrCode, ScanLine, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, QrCode, ScanLine, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
 import { fetchLobby } from "@/lib/workspaces";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DEMO_LOBBY_ID,
+  DEMO_LOBBY_NAME,
+  DEMO_LOBBY_DESCRIPTION,
+  DEMO_LOBBY_PATH,
+  fetchDemoLobbyWaitingCount,
+} from "@/lib/demoLobby";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -33,6 +41,26 @@ const LobbyChooser = () => {
   const [checking, setChecking] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demoCount, setDemoCount] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const n = await fetchDemoLobbyWaitingCount();
+      if (!cancelled) setDemoCount(n);
+    };
+    load();
+    const ch = supabase
+      .channel("lobby-chooser-demo")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "queue_entries", filter: `lobby_id=eq.${DEMO_LOBBY_ID}` },
+        () => load()
+      )
+      .subscribe();
+    const t = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
+  }, []);
 
   const goToLobby = async (rawId: string) => {
     const id = extractLobbyId(rawId);
@@ -102,6 +130,32 @@ const LobbyChooser = () => {
             Enter a lobby ID or scan the QR code provided by the organizer.
           </p>
         </div>
+
+        {/* Pinned demo lobby */}
+        <Link to={DEMO_LOBBY_PATH} className="block mb-6 group">
+          <Card className="relative p-5 border-2 border-primary/60 bg-gradient-to-br from-primary/5 via-card to-card shadow-glow ring-1 ring-primary/20 transition hover:-translate-y-0.5 hover:shadow-elegant animate-scale-in">
+            <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+              </span>
+              Live
+            </span>
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-5 w-5" /></div>
+              <div className="min-w-0 flex-1 pr-14">
+                <h3 className="font-semibold tracking-tight">{DEMO_LOBBY_NAME}</h3>
+                <p className="mt-0.5 text-xs font-medium text-primary">Try For Free — No Signup Needed</p>
+                <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{DEMO_LOBBY_DESCRIPTION}</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {demoCount === 0
+                    ? "Queue is empty — be the first! 👋"
+                    : <><span className="font-semibold tabular-nums text-foreground">{demoCount}</span> people in queue right now</>}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Link>
 
         <Card className="p-6 animate-scale-in">
           <form onSubmit={onSubmit} className="space-y-4">
