@@ -149,7 +149,7 @@ const Index = () => {
           </p>
           <div className="mt-7">
             <Button asChild variant="hero" size="lg" className="min-w-[240px]">
-              <Link to="/join/demo">Join Demo Queue <ArrowRight /></Link>
+              <Link to={DEMO_LOBBY_PATH}>Join Demo Queue <ArrowRight /></Link>
             </Button>
           </div>
           <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm text-primary">
