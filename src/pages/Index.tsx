@@ -38,8 +38,8 @@ const Index = () => {
     };
     load();
     const ch = supabase
-      .channel("demo-counter")
-      .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries" }, () => load())
+      .channel(`demo-counter-${DEMO_LOBBY_ID}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries", filter: `lobby_id=eq.${DEMO_LOBBY_ID}` }, () => load())
       .subscribe();
     const t = setInterval(load, 15000);
     return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
