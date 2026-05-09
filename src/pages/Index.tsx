@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FlowDemo } from "@/components/FlowDemo";
+import { HowItWorks } from "@/components/HowItWorks";
 import { Reveal } from "@/components/Reveal";
 import { Typewriter } from "@/components/Typewriter";
 import { supabase } from "@/integrations/supabase/client";
