@@ -6,7 +6,14 @@ import { FlowDemo } from "@/components/FlowDemo";
 import { Reveal } from "@/components/Reveal";
 import { Typewriter } from "@/components/Typewriter";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchDemoWaitingCount } from "@/lib/workspaces";
+import { toast } from "sonner";
+import {
+  DEMO_LOBBY_ID,
+  DEMO_LOBBY_PATH,
+  DEMO_LOBBY_PUBLIC_URL,
+  fetchDemoLobbyWaitingCount,
+} from "@/lib/demoLobby";
+import { Share2 } from "lucide-react";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
