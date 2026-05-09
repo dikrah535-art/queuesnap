@@ -33,7 +33,7 @@ const Index = () => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const n = await fetchDemoWaitingCount();
+      const n = await fetchDemoLobbyWaitingCount();
       if (!cancelled) setDemoCount(n);
     };
     load();
