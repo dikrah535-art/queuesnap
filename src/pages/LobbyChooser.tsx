@@ -131,6 +131,32 @@ const LobbyChooser = () => {
           </p>
         </div>
 
+        {/* Pinned demo lobby */}
+        <Link to={DEMO_LOBBY_PATH} className="block mb-6 group">
+          <Card className="relative p-5 border-2 border-primary/60 bg-gradient-to-br from-primary/5 via-card to-card shadow-glow ring-1 ring-primary/20 transition hover:-translate-y-0.5 hover:shadow-elegant animate-scale-in">
+            <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+              </span>
+              Live
+            </span>
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-5 w-5" /></div>
+              <div className="min-w-0 flex-1 pr-14">
+                <h3 className="font-semibold tracking-tight">{DEMO_LOBBY_NAME}</h3>
+                <p className="mt-0.5 text-xs font-medium text-primary">Try For Free — No Signup Needed</p>
+                <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{DEMO_LOBBY_DESCRIPTION}</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {demoCount === 0
+                    ? "Queue is empty — be the first! 👋"
+                    : <><span className="font-semibold tabular-nums text-foreground">{demoCount}</span> people in queue right now</>}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
         <Card className="p-6 animate-scale-in">
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
