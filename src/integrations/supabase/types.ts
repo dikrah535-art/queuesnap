@@ -345,7 +345,53 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_queue_entries: {
+        Row: {
+          created_at: string | null
+          device_type: string | null
+          id: string | null
+          is_vip: boolean | null
+          lobby_id: string | null
+          name: string | null
+          position: number | null
+          served_at: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_type?: string | null
+          id?: string | null
+          is_vip?: boolean | null
+          lobby_id?: string | null
+          name?: string | null
+          position?: number | null
+          served_at?: string | null
+          status?: Database["public"]["Enums"]["queue_entry_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_type?: string | null
+          id?: string | null
+          is_vip?: boolean | null
+          lobby_id?: string | null
+          name?: string | null
+          position?: number | null
+          served_at?: string | null
+          status?: Database["public"]["Enums"]["queue_entry_status"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_entries_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       ack_ring: { Args: { _id: string; _token: string }; Returns: boolean }
