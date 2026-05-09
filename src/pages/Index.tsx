@@ -88,16 +88,47 @@ const Index = () => {
             <p className="mx-auto mt-5 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
               Eliminate crowd congestion during device collection using tokens, QR codes, and digital queues.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[200px]">
-                <Link to="/checkin">Get Started <ArrowRight /></Link>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3">
+              <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[240px]">
+                <Link to={DEMO_LOBBY_PATH}>Try Live Demo <ArrowRight /></Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-w-[200px]">
-                <Link to="/admin-demo"><ShieldCheck className="mr-1" /> Try Admin Demo</Link>
-              </Button>
-              <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto text-primary hover:bg-primary/5">
-                <Link to="/status"><ScanLine className="mr-1" /> Check status</Link>
-              </Button>
+              <p className="text-xs text-muted-foreground">No signup needed • See it live</p>
+
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm text-success">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+                </span>
+                {demoCount === 0 ? (
+                  <span>🟢 Queue is empty — be the first!</span>
+                ) : (
+                  <span><span className="font-semibold tabular-nums">{demoCount}</span> people in queue right now</span>
+                )}
+              </div>
+
+              <div className="mt-3 flex flex-col sm:flex-row items-center gap-2">
+                <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                  <Link to="/checkin">Create Your Queue</Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(DEMO_LOBBY_PUBLIC_URL);
+                      toast.success("Link copied! Share it with anyone 🎉");
+                    } catch {
+                      toast.error("Couldn't copy link");
+                    }
+                  }}
+                >
+                  <Share2 className="mr-1" /> Share Demo Link
+                </Button>
+                <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto text-primary hover:bg-primary/5">
+                  <Link to="/status"><ScanLine className="mr-1" /> Check status</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
