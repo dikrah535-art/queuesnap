@@ -28,17 +28,22 @@ Deno.serve(async (req) => {
     }
 
     const html = `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f172a">
-        <h2 style="margin:0 0 8px">Hi ${body.name} 👋</h2>
-        <p style="margin:0 0 16px;color:#475569">You've been added to the queue for <strong>${body.queueName}</strong>.</p>
-        <div style="background:#f1f5f9;border-radius:12px;padding:24px;text-align:center;margin:16px 0">
-          <p style="margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#64748b">Your Token Number</p>
-          <p style="margin:8px 0 0;font-size:44px;font-weight:700;color:#2563eb">#${body.tokenNumber}</p>
-        </div>
-        <p style="text-align:center;margin:24px 0">
-          <a href="${body.tokenUrl}" style="background:#2563eb;color:#fff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;display:inline-block">View My Token Status →</a>
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f172a;background:#ffffff">
+        <h2 style="margin:0 0 8px;font-size:22px">Hi ${body.name} 👋</h2>
+        <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.5">
+          You've been added to the queue for <strong>${body.queueName}</strong> by the admin.
         </p>
-        <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:32px">Powered by QueueSnap</p>
+        <div style="background:#f1f5f9;border-radius:14px;padding:28px;text-align:center;margin:20px 0">
+          <p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b">Your Token Number</p>
+          <p style="margin:10px 0 0;font-size:54px;font-weight:800;color:#4f46e5;letter-spacing:-0.02em">#${body.tokenNumber}</p>
+        </div>
+        <p style="margin:0 0 24px;color:#475569;font-size:14px;line-height:1.5;text-align:center">
+          Track your position in real time — see exactly when it's your turn, no app download needed.
+        </p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${body.tokenUrl}" style="background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;display:inline-block;font-size:15px">View My Token Status →</a>
+        </p>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:32px">Powered by QueueSnap • No account needed</p>
       </div>
     `;
 
@@ -51,7 +56,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "QueueSnap <onboarding@resend.dev>",
         to: body.email,
-        subject: `Your Queue Token #${body.tokenNumber} — ${body.queueName}`,
+        subject: `You've been added to the queue — Token #${body.tokenNumber}`,
         html,
       }),
     });
