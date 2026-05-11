@@ -321,7 +321,7 @@ const LobbyManage = () => {
                 )
               : entries;
             if (entries.length === 0) {
-              return <p className="py-12 text-center text-sm text-muted-foreground">No one in the queue yet.</p>;
+              return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
             }
             if (filtered.length === 0) {
               return <p className="py-12 text-center text-sm text-muted-foreground">No matches.</p>;
