@@ -255,15 +255,25 @@ const JoinLobby = () => {
               ) : (
                 <>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Your position</p>
-                  <p className="mt-2 text-5xl font-semibold tabular-nums">{position}</p>
+                  <p className="mt-2 text-6xl font-bold tabular-nums animate-scale-in">{position}</p>
                   <p className="mt-1 text-xs text-muted-foreground">Token #{myEntry.position}</p>
                   <p className="mt-3 text-sm">{position <= 1 ? "You're next!" : `${position - 1} ahead of you`}</p>
+                  {eta > 0 && (
+                    <p className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" /> Estimated wait: ~{eta} min
+                    </p>
+                  )}
                 </>
               )}
               <p className="mt-4 text-sm">Joined as <span className="font-medium">{myEntry.name}</span></p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={onLeave}>
-                <X className="mr-1 h-4 w-4" /> Leave queue
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button variant="outline" size="sm" className="min-h-[44px]" onClick={shareMyPosition}>
+                  <Share2 className="mr-1 h-4 w-4" /> Share position
+                </Button>
+                <Button variant="outline" size="sm" className="min-h-[44px]" onClick={onLeave}>
+                  <X className="mr-1 h-4 w-4" /> Leave queue
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="mt-6 space-y-4">
@@ -293,6 +303,9 @@ const JoinLobby = () => {
                 {joining ? <Loader2 className="animate-spin" /> : full ? "Queue Full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">No account needed. We'll save your spot in this browser.</p>
+              <Button type="button" variant="ghost" size="sm" className="w-full" onClick={shareJoinLink}>
+                <Share2 className="mr-1 h-4 w-4" /> Share this queue
+              </Button>
             </div>
           )}
         </Card>
