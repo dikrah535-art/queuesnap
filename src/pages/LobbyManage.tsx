@@ -22,6 +22,7 @@ const LobbyManage = () => {
   const { wsId, lobbyId } = useParams<{ wsId: string; lobbyId: string }>();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
+  const [todayStats, setTodayStats] = useState<{ total: number; served: number; avgMs: number | null }>({ total: 0, served: 0, avgMs: null });
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
   const [addEmail, setAddEmail] = useState("");
@@ -56,8 +57,21 @@ const LobbyManage = () => {
   const reload = async () => {
     if (!lobbyId) return;
     try {
-      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchLobbyEntriesAdmin(lobbyId, { includeAll: false })]);
+      const [l, es, allEs] = await Promise.all([
+        fetchLobby(lobbyId),
+        fetchLobbyEntriesAdmin(lobbyId, { includeAll: false }),
+        fetchLobbyEntriesAdmin(lobbyId, { includeAll: true }),
+      ]);
       setLobby(l); setEntries(es);
+
+      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+      const todays = allEs.filter((e) => new Date(e.created_at) >= startOfDay);
+      const served = todays.filter((e) => e.served_at && (e.status === "served" || e.status === "collected"));
+      const durations = served
+        .map((e) => new Date(e.served_at!).getTime() - new Date(e.created_at).getTime())
+        .filter((d) => d > 0 && d < 1000 * 60 * 60 * 12);
+      const avgMs = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+      setTodayStats({ total: todays.length, served: served.length, avgMs });
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
   };
@@ -219,24 +233,28 @@ const LobbyManage = () => {
       </header>
 
       <main className="container space-y-6 py-8">
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        {/* Live stats */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <Card className="p-5">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">In queue</p>
-            <p className="mt-1 text-3xl font-semibold">{total}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Total today</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">{todayStats.total}</p>
+          </Card>
+          <Card className="p-5">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Currently waiting</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">{total}</p>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
               <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">{total} / {lobby.max_capacity} capacity</p>
           </Card>
           <Card className="p-5">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Currently serving</p>
-            <p className="mt-1 text-3xl font-semibold truncate">{serving?.name ?? "—"}</p>
-            {serving && <Badge variant="secondary" className="mt-3">#{serving.position}</Badge>}
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Served today</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">{todayStats.served}</p>
           </Card>
           <Card className="p-5">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
-            <Badge variant={lobby.status === "open" ? "default" : "secondary"} className="mt-2">{lobby.status}</Badge>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg service time</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">
+              {todayStats.avgMs != null ? `${Math.round(todayStats.avgMs / 60000)}m` : "—"}
+            </p>
           </Card>
         </div>
 
