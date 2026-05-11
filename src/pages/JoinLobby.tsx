@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Check, Loader2, LogIn, X } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Bell, BellOff, Check, Clock, Loader2, LogIn, Share2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
+import { getJoinUrl } from "@/lib/urls";
 import {
   cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
@@ -18,6 +20,8 @@ import {
 const JoinLobby = () => {
   const navigate = useNavigate();
   const { lobbyId: lobbyKey } = useParams<{ lobbyId: string }>();
+  const [searchParams] = useSearchParams();
+  const tokenIdParam = searchParams.get("token");
   const [lobbyId, setLobbyId] = useState<string | null>(null);
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
@@ -60,14 +64,17 @@ const JoinLobby = () => {
   const reload = async () => {
     if (!lobbyId) return;
     try {
-      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId)]);
+      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId, { includeAll: !!tokenIdParam })]);
       setLobby(l); setEntries(es);
 
-      // Find my entry
-      const { data: { user } } = await supabase.auth.getUser();
+      // Find my entry — prefer ?token=X (from email link)
       let mine: QueueEntry | null = null;
-      if (user) {
-        mine = es.find((e) => e.user_id === user.id) ?? null;
+      if (tokenIdParam) {
+        mine = es.find((e) => e.id === tokenIdParam) ?? null;
+      }
+      if (!mine) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) mine = es.find((e) => e.user_id === user.id) ?? null;
       }
       if (!mine) {
         const ref = getAnonEntryFor(lobbyId);
@@ -178,8 +185,24 @@ const JoinLobby = () => {
     } catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
-  if (loading) return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-accent" /></div>;
+  if (loading) return (
+    <div className="container max-w-md py-12 space-y-4">
+      <Skeleton className="h-8 w-3/4" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-12 w-full" />
+    </div>
+  );
   if (!lobby) return <div className="grid min-h-screen place-items-center text-muted-foreground">Lobby not found</div>;
+
+  const eta = position > 0 ? position * 3 : 0;
+  const shareMyPosition = () => {
+    const text = `I'm #${position} in queue at ${lobby.name} — join here: ${getJoinUrl(lobby.id)}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+  const shareJoinLink = () => {
+    const text = `Join the queue at ${lobby.name}: ${getJoinUrl(lobby.id)}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
 
   const total = entries.length;
   const full = total >= lobby.max_capacity;
@@ -232,15 +255,25 @@ const JoinLobby = () => {
               ) : (
                 <>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Your position</p>
-                  <p className="mt-2 text-5xl font-semibold tabular-nums">{position}</p>
+                  <p className="mt-2 text-6xl font-bold tabular-nums animate-scale-in">{position}</p>
                   <p className="mt-1 text-xs text-muted-foreground">Token #{myEntry.position}</p>
                   <p className="mt-3 text-sm">{position <= 1 ? "You're next!" : `${position - 1} ahead of you`}</p>
+                  {eta > 0 && (
+                    <p className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" /> Estimated wait: ~{eta} min
+                    </p>
+                  )}
                 </>
               )}
               <p className="mt-4 text-sm">Joined as <span className="font-medium">{myEntry.name}</span></p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={onLeave}>
-                <X className="mr-1 h-4 w-4" /> Leave queue
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button variant="outline" size="sm" className="min-h-[44px]" onClick={shareMyPosition}>
+                  <Share2 className="mr-1 h-4 w-4" /> Share position
+                </Button>
+                <Button variant="outline" size="sm" className="min-h-[44px]" onClick={onLeave}>
+                  <X className="mr-1 h-4 w-4" /> Leave queue
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="mt-6 space-y-4">
@@ -270,6 +303,9 @@ const JoinLobby = () => {
                 {joining ? <Loader2 className="animate-spin" /> : full ? "Queue Full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">No account needed. We'll save your spot in this browser.</p>
+              <Button type="button" variant="ghost" size="sm" className="w-full" onClick={shareJoinLink}>
+                <Share2 className="mr-1 h-4 w-4" /> Share this queue
+              </Button>
             </div>
           )}
         </Card>

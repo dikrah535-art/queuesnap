@@ -21,6 +21,7 @@ import WorkspaceAdmins from "./pages/WorkspaceAdmins";
 import LobbyManage from "./pages/LobbyManage";
 import JoinLobby from "./pages/JoinLobby";
 import AdminDemoVisitors from "./pages/AdminDemoVisitors";
+import LobbyPrint from "./pages/LobbyPrint";
 import { AdminGuard } from "./components/AdminGuard";
 import { WorkspaceAuthGate } from "./components/workspace/WorkspaceAuthGate";
 import { RecoveryWatcher } from "./components/RecoveryWatcher";
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/workspaces/:wsId/admins" element={<WorkspaceAuthGate><WorkspaceAdmins /></WorkspaceAuthGate>} />
           <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
           <Route path="/join/:lobbyId" element={<JoinLobby />} />
+          <Route path="/admin/lobby/:lobbyId/print" element={<LobbyPrint />} />
           <Route path="/admin/demo-visitors" element={<WorkspaceAuthGate><AdminDemoVisitors /></WorkspaceAuthGate>} />
           <Route path="*" element={<NotFound />} />
           </Routes>
