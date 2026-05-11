@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QrCard } from "@/components/workspace/QrCard";
+import { getJoinUrl, getTokenUrl } from "@/lib/urls";
 import {
   adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
   markCollected, markNotified, sendTokenEmail, serveNext, updateLobby,
@@ -138,7 +139,7 @@ const LobbyManage = () => {
         phone: addPhone.trim() || undefined,
         isVip: addVip,
       });
-      const tokenUrl = `${window.location.origin}/join/${lobby.slug ?? lobbyId}`;
+      const tokenUrl = getTokenUrl(lobbyId, entry.id);
       toast.success(`Token #${entry.position} assigned to ${entry.name}`);
 
       if (addEmail.trim()) {
@@ -185,7 +186,7 @@ const LobbyManage = () => {
 
   const copyLink = async () => {
     if (!lobbyId) return;
-    const url = `${window.location.origin}/join/${lobbyId}`;
+    const url = getJoinUrl(lobbyId);
     try { await navigator.clipboard.writeText(url); toast.success("Link copied"); }
     catch { toast.error("Could not copy"); }
   };
@@ -278,7 +279,7 @@ const LobbyManage = () => {
         <Card className="p-5">
           <h3 className="mb-4 font-semibold">Share / QR code</h3>
           <QrCard
-            url={`${window.location.origin}/join/${lobby.id}`}
+            url={getJoinUrl(lobby.id)}
             filename={`queuesnap-${lobby.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}
           />
         </Card>
