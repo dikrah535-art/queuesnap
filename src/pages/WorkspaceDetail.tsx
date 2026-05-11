@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, DoorOpen, Loader2, Plus, QrCode, Settings, Users, Activity } from "lucide-react";
+import { ArrowLeft, DoorOpen, Loader2, Plus, Settings, Share2, Users, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { QrCard } from "@/components/workspace/QrCard";
+import { LobbyShareModal } from "@/components/workspace/LobbyShareModal";
 import {
   createLobby, fetchLobbies, fetchWorkspace, getMyRole,
   type Lobby, type Workspace, type WorkspaceRole,
@@ -79,7 +80,14 @@ const WorkspaceDetail = () => {
     finally { setCreating(false); }
   };
 
-  if (loading) return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-accent" /></div>;
+  if (loading) return (
+    <div className="container py-10">
+      <Skeleton className="h-8 w-48" />
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0,1,2].map((i) => <Skeleton key={i} className="h-48 w-full" />)}
+      </div>
+    </div>
+  );
   if (!ws) return <div className="grid min-h-screen place-items-center text-muted-foreground">Workspace not found</div>;
 
   return (
@@ -127,8 +135,8 @@ const WorkspaceDetail = () => {
         {lobbies.length === 0 ? (
           <Card className="p-12 text-center">
             <DoorOpen className="mx-auto h-10 w-10 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium">No lobbies yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{isAdmin ? "Create your first lobby to start a queue." : "Ask an admin to create a lobby."}</p>
+            <h3 className="mt-4 text-lg font-medium">No queues yet — create your first one! 🎯</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{isAdmin ? "Spin up a lobby to start collecting people." : "Ask an admin to create a lobby."}</p>
             {isAdmin && <Button className="mt-6" variant="hero" onClick={() => setOpen(true)}><Plus className="mr-1" /> Create lobby</Button>}
           </Card>
         ) : (
@@ -148,18 +156,18 @@ const WorkspaceDetail = () => {
                     <span className="inline-flex items-center gap-1.5 text-muted-foreground"><Activity className="h-4 w-4" /> {count} / {l.max_capacity}</span>
                     {full && <Badge variant="destructive">Full</Badge>}
                   </div>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {isAdmin && (
-                      <Button asChild variant="outline" size="sm" className="flex-1">
+                      <Button asChild variant="outline" size="sm" className="flex-1 min-h-[44px]">
                         <Link to={`/workspaces/${ws.id}/lobbies/${l.id}`}><Settings className="mr-1 h-4 w-4" /> Manage</Link>
                       </Button>
                     )}
                     {isAdmin && (
-                      <Button variant="outline" size="sm" onClick={() => setQrLobby(l)} aria-label="Show QR">
-                        <QrCode className="h-4 w-4" />
+                      <Button variant="outline" size="sm" className="flex-1 min-h-[44px]" onClick={() => setQrLobby(l)}>
+                        <Share2 className="mr-1 h-4 w-4" /> QR & Share
                       </Button>
                     )}
-                    <Button asChild variant={isAdmin ? "ghost" : "hero"} size="sm" className="flex-1">
+                    <Button asChild variant={isAdmin ? "ghost" : "hero"} size="sm" className="flex-1 min-h-[44px]">
                       <Link to={`/join/${l.id}`}>Join page</Link>
                     </Button>
                   </div>
@@ -169,17 +177,14 @@ const WorkspaceDetail = () => {
           </div>
         )}
 
-        <Dialog open={!!qrLobby} onOpenChange={(v) => !v && setQrLobby(null)}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{qrLobby?.name} · Join QR</DialogTitle></DialogHeader>
-            {qrLobby && (
-              <QrCard
-                url={`${window.location.origin}/join/${qrLobby.id}`}
-                filename={`queuesnap-${qrLobby.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+        {qrLobby && (
+          <LobbyShareModal
+            open={!!qrLobby}
+            onOpenChange={(v) => !v && setQrLobby(null)}
+            lobbyId={qrLobby.id}
+            lobbyName={qrLobby.name}
+          />
+        )}
       </main>
     </div>
   );
