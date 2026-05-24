@@ -53,8 +53,6 @@ export interface WorkspaceMember {
 }
 
 // ---- Local anonymous-join token storage ----
-// Anonymous users can't be tracked via auth, so we keep their entry id locally
-// to allow status polling and cancel actions.
 const ANON_KEY = "qs:anon-entries";
 
 interface AnonEntryRef { lobbyId: string; entryId: string; name: string }
@@ -174,10 +172,6 @@ export async function fetchLobby(id: string) {
   return data as Lobby;
 }
 
-/**
- * Public-safe queue read. Excludes `phone` (which is column-restricted in RLS
- * to workspace admins only). Used by the public JoinLobby page.
- */
 export async function fetchQueueEntries(
   lobbyId: string,
   opts: { includeAll?: boolean } = {},
@@ -192,10 +186,6 @@ export async function fetchQueueEntries(
   return ((data ?? []) as Omit<QueueEntry, "phone">[]).map((e) => ({ ...e, phone: null })) as QueueEntry[];
 }
 
-/**
- * Admin-only queue read. Returns full entry data including phone numbers.
- * Server-side enforces that the caller is an admin/owner of the lobby's workspace.
- */
 export async function fetchLobbyEntriesAdmin(
   lobbyId: string,
   opts: { includeAll?: boolean } = {},
@@ -288,13 +278,28 @@ export async function removeMember(memberId: string) {
 export async function getMyRole(workspaceId: string): Promise<WorkspaceRole | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+
+  // Check workspace_members first
   const { data } = await supabase
     .from("workspace_members")
     .select("role")
     .eq("workspace_id", workspaceId)
     .eq("user_id", user.id)
     .maybeSingle();
-  return (data?.role as WorkspaceRole) ?? null;
+
+  if (data?.role) return data.role as WorkspaceRole;
+
+  // Fallback: check if user is the owner directly in workspaces table
+  const { data: ws } = await supabase
+    .from("workspaces")
+    .select("owner_id")
+    .eq("id", workspaceId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (ws) return "owner";
+
+  return null;
 }
 
 // ---- Demo lobby helpers ----
@@ -327,6 +332,7 @@ export interface DemoVisitor {
   id: string; name: string; email: string | null; phone: string | null;
   queue_entry_id: string | null; visited_at: string; source: string;
 }
+
 export async function fetchDemoVisitors(): Promise<DemoVisitor[]> {
   const { data, error } = await supabase
     .from("demo_visitors")
@@ -337,7 +343,6 @@ export async function fetchDemoVisitors(): Promise<DemoVisitor[]> {
   return (data ?? []) as DemoVisitor[];
 }
 
-// ---- Admin manual add (with email + VIP) ----
 export async function adminAddEntry(input: {
   lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string; isVip?: boolean;
 }) {
