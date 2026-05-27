@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, Plus, Loader2, ArrowRight, Users, Sparkles, ArrowLeft } from "lucide-react";
+import { Building2, Plus, Loader2, ArrowRight, Users, Sparkles, ArrowLeft, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/lib/auth";
 import { createWorkspace, fetchMyWorkspaces, type Workspace } from "@/lib/workspaces";
+import { supabase } from "@/integrations/supabase/client";
 
 const DEMO_NAME = "Agresh Ji's Workspace";
 const DEMO_DESC = "Office Meeting";
@@ -25,8 +26,8 @@ const Workspaces = () => {
   const [desc, setDesc] = useState("");
   const [capacity, setCapacity] = useState<number>(50);
   const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Ghost-preview state (separate from real inputs)
   const [ghostName, setGhostName] = useState("");
   const [ghostDesc, setGhostDesc] = useState("");
   const [ghostCap, setGhostCap] = useState(0);
@@ -51,7 +52,6 @@ const Workspaces = () => {
     animRef.current = [];
   };
 
-  // Animate the ghost preview layer (never touches real inputs)
   useEffect(() => {
     if (!open) {
       clearAnimations();
@@ -77,7 +77,6 @@ const Workspaces = () => {
         const id = window.setTimeout(() => setGhostCap(i), capStart + i * 40);
         animRef.current.push(id);
       }
-      // restart loop
       const total = capStart + DEMO_CAPACITY * 40 + 2200;
       const id = window.setTimeout(loop, total);
       animRef.current.push(id);
@@ -96,7 +95,6 @@ const Workspaces = () => {
     }
 
     setCreating(true);
-    // Hard safety: never let the spinner spin forever
     const watchdog = window.setTimeout(() => {
       setCreating((c) => {
         if (c) toast.error("Request timed out. Please try again.");
@@ -131,8 +129,23 @@ const Workspaces = () => {
     }
   };
 
+  const deleteWorkspace = async (ws: Workspace) => {
+    if (!confirm(`Delete workspace "${ws.name}"? This will delete all lobbies and queues inside. This cannot be undone.`)) return;
+    setDeletingId(ws.id);
+    try {
+      const { error } = await supabase.from("workspaces").delete().eq("id", ws.id);
+      if (error) throw error;
+      toast.success("Workspace deleted");
+      setItems((s) => s.filter((w) => w.id !== ws.id));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete workspace");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleOpenChange = (next: boolean) => {
-    if (creating) return; // don't close mid-request
+    if (creating) return;
     setOpen(next);
     if (!next) {
       clearAnimations();
@@ -163,90 +176,76 @@ const Workspaces = () => {
               <DialogTrigger asChild>
                 <Button variant="hero" size="sm"><Plus className="mr-1" /> New workspace</Button>
               </DialogTrigger>
-            <DialogContent className="animate-scale-in max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Create workspace
-                </DialogTitle>
-              </DialogHeader>
+              <DialogContent className="animate-scale-in max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Create workspace
+                  </DialogTitle>
+                </DialogHeader>
 
-              {/* Ghost preview layer — non-interactive, low opacity, separate from real inputs */}
-              <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 select-none pointer-events-none" aria-hidden="true">
-                <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <span>Demo Preview</span>
-                  <span className="rounded bg-muted px-1.5 py-0.5">demo</span>
+                <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 select-none pointer-events-none" aria-hidden="true">
+                  <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <span>Demo Preview</span>
+                    <span className="rounded bg-muted px-1.5 py-0.5">demo</span>
+                  </div>
+                  <div className="space-y-2 opacity-60">
+                    <div className="flex items-center gap-2">
+                      <span className="w-20 text-xs text-muted-foreground">Name</span>
+                      <span className="font-medium text-sm tracking-tight min-h-[1.25rem]">
+                        {ghostName}
+                        <span className="ml-0.5 inline-block h-3 w-[2px] -mb-0.5 bg-foreground/50 animate-pulse" />
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-20 text-xs text-muted-foreground">Event</span>
+                      <span className="text-sm min-h-[1.25rem]">{ghostDesc || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-20 text-xs text-muted-foreground">Capacity</span>
+                      <span className="text-sm tabular-nums font-semibold text-primary">{ghostCap}</span>
+                      <span className="text-xs text-muted-foreground">people</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2 opacity-60">
-                  <div className="flex items-center gap-2">
-                    <span className="w-20 text-xs text-muted-foreground">Name</span>
-                    <span className="font-medium text-sm tracking-tight min-h-[1.25rem]">
-                      {ghostName}
-                      <span className="ml-0.5 inline-block h-3 w-[2px] -mb-0.5 bg-foreground/50 animate-pulse" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-20 text-xs text-muted-foreground">Event</span>
-                    <span className="text-sm min-h-[1.25rem]">{ghostDesc || "—"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-20 text-xs text-muted-foreground">Capacity</span>
-                    <span className="text-sm tabular-nums font-semibold text-primary">{ghostCap}</span>
-                    <span className="text-xs text-muted-foreground">people</span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ws-name">Organization name</Label>
-                  <Input
-                    id="ws-name"
-                    placeholder="e.g. ABC School"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    maxLength={80}
-                    autoComplete="off"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ws-name">Organization name</Label>
+                    <Input id="ws-name" placeholder="e.g. ABC School" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoComplete="off" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ws-desc">Event description</Label>
+                    <Textarea id="ws-desc" placeholder="What is this workspace for?" value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={500} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ws-cap">Maximum queue capacity</Label>
+                    <Input
+                      id="ws-cap"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={10000}
+                      value={Number.isFinite(capacity) ? capacity : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "") { setCapacity(NaN as unknown as number); return; }
+                        const n = parseInt(v, 10);
+                        if (!Number.isFinite(n)) return;
+                        setCapacity(Math.max(1, Math.min(10000, n)));
+                      }}
+                      onBlur={() => { if (!Number.isFinite(capacity) || capacity < 1) setCapacity(50); }}
+                    />
+                    <p className="text-xs text-muted-foreground">Suggested capacity based on typical usage. You can change it anytime.</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ws-desc">Event description</Label>
-                  <Textarea
-                    id="ws-desc"
-                    placeholder="What is this workspace for?"
-                    value={desc}
-                    onChange={(e) => setDesc(e.target.value)}
-                    maxLength={500}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ws-cap">Maximum queue capacity</Label>
-                  <Input
-                    id="ws-cap"
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={10000}
-                    value={Number.isFinite(capacity) ? capacity : ""}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "") { setCapacity(NaN as unknown as number); return; }
-                      const n = parseInt(v, 10);
-                      if (!Number.isFinite(n)) return;
-                      setCapacity(Math.max(1, Math.min(10000, n)));
-                    }}
-                    onBlur={() => { if (!Number.isFinite(capacity) || capacity < 1) setCapacity(50); }}
-                  />
-                  <p className="text-xs text-muted-foreground">Suggested capacity based on typical usage. You can change it anytime.</p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={creating}>Cancel</Button>
-                <Button onClick={submit} disabled={creating || !authReady}>
-                  {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating…</> : "Create workspace"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={creating}>Cancel</Button>
+                  <Button onClick={submit} disabled={creating || !authReady}>
+                    {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating…</> : "Create workspace"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
             </Dialog>
           </div>
         </div>
@@ -273,7 +272,18 @@ const Workspaces = () => {
               <Card key={w.id} className="p-5 transition hover:-translate-y-0.5 hover:shadow-elegant animate-fade-in">
                 <div className="flex items-start justify-between">
                   <div className="rounded-lg bg-primary/10 p-2 text-primary"><Building2 className="h-5 w-5" /></div>
-                  <span className="text-xs text-muted-foreground"><Users className="inline h-3 w-3 mr-1" />Owner</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground"><Users className="inline h-3 w-3 mr-1" />Owner</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteWorkspace(w)}
+                      disabled={deletingId === w.id}
+                    >
+                      {deletingId === w.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
                 <h3 className="mt-4 font-semibold tracking-tight">{w.name}</h3>
                 {w.description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{w.description}</p>}
