@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Target, Zap, Users } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Building2, Clock, GraduationCap, Lightbulb, QrCode, ScanLine, ShieldCheck, Sparkles, Zap, Users, LogIn, QrCode as QrIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Reveal } from "@/components/Reveal";
 import { Typewriter } from "@/components/Typewriter";
@@ -14,6 +16,7 @@ import {
   fetchDemoLobbyWaitingCount,
 } from "@/lib/demoLobby";
 import { Share2 } from "lucide-react";
+import { resolveLobbyKey } from "@/lib/workspaces";
 
 const features = [
   { icon: Zap, title: "No more queues", desc: "Join a digital pickup queue from your seat. Get notified when it's your turn." },
@@ -28,7 +31,11 @@ const useCases = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [demoCount, setDemoCount] = useState<number>(0);
+  const [showGetStarted, setShowGetStarted] = useState(false);
+  const [lobbyInput, setLobbyInput] = useState("");
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,6 +51,24 @@ const Index = () => {
     const t = setInterval(load, 15000);
     return () => { cancelled = true; clearInterval(t); supabase.removeChannel(ch); };
   }, []);
+
+  const handleJoinByLink = async () => {
+    if (!lobbyInput.trim()) return;
+    setJoining(true);
+    try {
+      // Extract lobby ID from URL or use directly
+      const input = lobbyInput.trim();
+      const match = input.match(/\/join\/([a-f0-9-]{36})/);
+      const key = match ? match[1] : input;
+      const id = await resolveLobbyKey(key);
+      if (!id) { toast.error("Lobby not found — check the link or ID"); return; }
+      navigate(`/join/${id}`);
+    } catch {
+      toast.error("Invalid lobby link");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,7 +93,6 @@ const Index = () => {
               Smart Device Submission System
             </div>
 
-            {/* Big brand title */}
             <div className="mt-6 flex items-center justify-center gap-3">
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary md:h-14 md:w-14">
                 <QrCode className="h-7 w-7 md:h-8 md:w-8" />
@@ -88,28 +112,100 @@ const Index = () => {
             <p className="mx-auto mt-5 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
               Eliminate crowd congestion during device collection using tokens, QR codes, and digital queues.
             </p>
+
             <div className="mt-10 flex flex-col items-center justify-center gap-3">
+
+              {/* Get Started Button */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto min-w-[240px] border-primary/40 text-primary hover:bg-primary/5"
+                onClick={() => setShowGetStarted(!showGetStarted)}
+              >
+                {showGetStarted ? <X className="mr-2 h-4 w-4" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+                {showGetStarted ? "Close" : "Get Started"}
+              </Button>
+
+              {/* Get Started Panel */}
+              {showGetStarted && (
+                <Card className="w-full max-w-md p-6 animate-scale-in text-left">
+                  <h3 className="font-semibold text-base mb-4 text-center">What would you like to do?</h3>
+                  <div className="grid gap-3">
+                    {/* Admin option */}
+                    <Button
+                      asChild
+                      variant="hero"
+                      size="lg"
+                      className="w-full justify-start"
+                    >
+                      <Link to="/admin/login?next=/workspaces">
+                        <LogIn className="mr-3 h-5 w-5" />
+                        <div className="text-left">
+                          <p className="font-semibold">I'm an Admin</p>
+                          <p className="text-xs opacity-80">Create and manage queues</p>
+                        </div>
+                      </Link>
+                    </Button>
+
+                    {/* Join by link */}
+                    <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <ScanLine className="h-4 w-4 text-primary" />
+                        Join a queue by link
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Paste lobby link or ID..."
+                          value={lobbyInput}
+                          onChange={(e) => setLobbyInput(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleJoinByLink()}
+                          className="flex-1"
+                        />
+                        <Button onClick={handleJoinByLink} disabled={!lobbyInput.trim() || joining}>
+                          {joining ? "..." : "Join"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Try demo */}
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="lg"
+                      className="w-full justify-start"
+                    >
+                      <Link to={DEMO_LOBBY_PATH}>
+                        <QrIcon className="mr-3 h-5 w-5 text-primary" />
+                        <div className="text-left">
+                          <p className="font-semibold">Try the live demo</p>
+                          <p className="text-xs text-muted-foreground">No signup needed</p>
+                        </div>
+                      </Link>
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {/* Try Live Demo */}
               <Button asChild variant="hero" size="lg" className="w-full sm:w-auto min-w-[240px]">
                 <Link to={DEMO_LOBBY_PATH}>Try Live Demo <ArrowRight /></Link>
               </Button>
               <p className="text-xs text-muted-foreground">No signup needed • See it live</p>
 
+              {/* Live queue count */}
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm text-success">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
                 </span>
                 {demoCount === 0 ? (
-                  <span>🟢 Queue is empty — be the first!</span>
+                  <span>Queue is empty — be the first!</span>
                 ) : (
                   <span><span className="font-semibold tabular-nums">{demoCount}</span> people in queue right now</span>
                 )}
               </div>
 
               <div className="mt-3 flex flex-col sm:flex-row items-center gap-2">
-                <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-w-[200px]">
-                  <Link to="/checkin">Create Your Queue</Link>
-                </Button>
                 <Button
                   variant="ghost"
                   size="lg"
@@ -134,12 +230,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How it works (upgraded) */}
+      {/* How it works */}
       <div className="animate-fade-in">
         <HowItWorks />
       </div>
 
-      {/* Try It Live - Demo lobby */}
+      {/* Try It Live */}
       <section className="container py-16 md:py-20">
         <Reveal className="mx-auto max-w-2xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-10 md:p-14 shadow-elegant">
           <span className="inline-block text-xs font-medium uppercase tracking-wider text-primary">See It In Action</span>
@@ -163,8 +259,6 @@ const Index = () => {
         </Reveal>
       </section>
 
-
-      {/* Trust / Use case */}
       {/* Problem & Vision */}
       <section className="container py-20 md:py-28">
         <Reveal className="mx-auto max-w-2xl text-center mb-14">
@@ -198,7 +292,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust / Use case */}
+      {/* Use cases */}
       <section className="container pb-8 md:pb-12">
         <Reveal className="mx-auto max-w-3xl rounded-3xl border border-border/60 bg-card p-8 md:p-12 text-center shadow-card">
           <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
@@ -243,7 +337,7 @@ const Index = () => {
       <section className="container pb-24">
         <div className="mx-auto max-w-2xl text-center">
           <Button asChild variant="hero" size="lg" className="min-w-[220px]">
-            <Link to="/checkin">Get Started <ArrowRight /></Link>
+            <Link to={DEMO_LOBBY_PATH}>Get Started <ArrowRight /></Link>
           </Button>
         </div>
       </section>
