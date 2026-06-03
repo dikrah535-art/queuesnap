@@ -19,6 +19,7 @@ import Workspaces from "./pages/Workspaces";
 import WorkspaceDetail from "./pages/WorkspaceDetail";
 import WorkspaceAdmins from "./pages/WorkspaceAdmins";
 import LobbyManage from "./pages/LobbyManage";
+import Analytics from "./pages/Analytics";
 import JoinLobby from "./pages/JoinLobby";
 import AdminDemoVisitors from "./pages/AdminDemoVisitors";
 import LobbyPrint from "./pages/LobbyPrint";
@@ -38,27 +39,28 @@ const App = () => (
         <BrowserRouter>
           <RecoveryWatcher />
           <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/checkin" element={<LobbyChooser />} />
-          <Route path="/checkin/device" element={<CheckIn />} />
-          <Route path="/receipt/:id" element={<Receipt />} />
-          <Route path="/status" element={<Status />} />
-          <Route path="/status/:id" element={<Status />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
-          <Route path="/admin/collection" element={<AdminGuard><Collection /></AdminGuard>} />
-          <Route path="/admin-demo" element={<AdminDemoLogin />} />
-          <Route path="/admin-dashboard" element={<AdminDemoDashboard />} />
-          {/* Workspace / Lobby system */}
-          <Route path="/workspaces" element={<WorkspaceAuthGate><Workspaces /></WorkspaceAuthGate>} />
-          <Route path="/workspaces/:id" element={<WorkspaceAuthGate><WorkspaceDetail /></WorkspaceAuthGate>} />
-          <Route path="/workspaces/:wsId/admins" element={<WorkspaceAuthGate><WorkspaceAdmins /></WorkspaceAuthGate>} />
-          <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
-          <Route path="/join/:lobbyId" element={<JoinLobby />} />
-          <Route path="/admin/lobby/:lobbyId/print" element={<LobbyPrint />} />
-          <Route path="/admin/demo-visitors" element={<WorkspaceAuthGate><AdminDemoVisitors /></WorkspaceAuthGate>} />
-          <Route path="*" element={<NotFound />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/checkin" element={<LobbyChooser />} />
+            <Route path="/checkin/device" element={<CheckIn />} />
+            <Route path="/receipt/:id" element={<Receipt />} />
+            <Route path="/status" element={<Status />} />
+            <Route path="/status/:id" element={<Status />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+            <Route path="/admin/collection" element={<AdminGuard><Collection /></AdminGuard>} />
+            <Route path="/admin-demo" element={<AdminDemoLogin />} />
+            <Route path="/admin-dashboard" element={<AdminDemoDashboard />} />
+            {/* Workspace / Lobby system */}
+            <Route path="/workspaces" element={<WorkspaceAuthGate><Workspaces /></WorkspaceAuthGate>} />
+            <Route path="/workspaces/:id" element={<WorkspaceAuthGate><WorkspaceDetail /></WorkspaceAuthGate>} />
+            <Route path="/workspaces/:wsId/admins" element={<WorkspaceAuthGate><WorkspaceAdmins /></WorkspaceAuthGate>} />
+            <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
+            <Route path="/workspaces/:wsId/lobbies/:lobbyId/analytics" element={<WorkspaceAuthGate><Analytics /></WorkspaceAuthGate>} />
+            <Route path="/join/:lobbyId" element={<JoinLobby />} />
+            <Route path="/admin/lobby/:lobbyId/print" element={<LobbyPrint />} />
+            <Route path="/admin/demo-visitors" element={<WorkspaceAuthGate><AdminDemoVisitors /></WorkspaceAuthGate>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
