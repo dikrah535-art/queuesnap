@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Check, Copy, Crown, Loader2, Mail, MessageCircle, PackageCheck, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +16,17 @@ import {
   markCollected, markNotified, sendTokenEmail, serveNext, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+
+// WhatsApp helper functions
+const sendWhatsAppToken = (phone: string, name: string, position: number, queueName: string, tokenUrl: string) => {
+  const msg = `Hi ${name} 👋\n\nYou've been added to *${queueName}*!\n\n🎫 *Your Token: #${position}*\n\nTrack your position in real time:\n${tokenUrl}\n\n_Powered by QueueSnap_`;
+  window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`, "_blank");
+};
+
+const sendWhatsAppCall = (phone: string, name: string, queueName: string) => {
+  const msg = `Hi ${name} 👋\n\nIt's your turn at *${queueName}*! 🔔\n\nPlease proceed to the counter now.\n\n_Powered by QueueSnap_`;
+  window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`, "_blank");
+};
 
 const LobbyManage = () => {
   const { wsId, lobbyId } = useParams<{ wsId: string; lobbyId: string }>();
@@ -34,9 +44,6 @@ const LobbyManage = () => {
   const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
   const ringChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  // Broadcast a ring event targeted at one specific queue entry.
-  // Only the participant device (JoinLobby) matching that entry id will
-  // play the ring tone — the admin/owner never hears it locally.
   const sendRingEvent = (entryId: string, action: "ring" | "stop") => {
     const ch = ringChannelRef.current;
     if (!ch) { toast.error("Not connected — try again in a moment"); return; }
@@ -48,6 +55,7 @@ const LobbyManage = () => {
     sendRingEvent(entryId, "ring");
     toast.success(`Ringing ${name}'s device…`);
   };
+
   const onStopRing = () => {
     if (ringingEntryId) sendRingEvent(ringingEntryId, "stop");
     setRingingEntryId(null);
@@ -63,7 +71,6 @@ const LobbyManage = () => {
         fetchLobbyEntriesAdmin(lobbyId, { includeAll: true }),
       ]);
       setLobby(l); setEntries(es);
-
       const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
       const todays = allEs.filter((e) => new Date(e.created_at) >= startOfDay);
       const served = todays.filter((e) => e.served_at && (e.status === "served" || e.status === "collected"));
@@ -75,6 +82,7 @@ const LobbyManage = () => {
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
   };
+
   useEffect(() => { reload(); }, [lobbyId]);
 
   useEffect(() => {
@@ -85,26 +93,19 @@ const LobbyManage = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "lobbies", filter: `id=eq.${lobbyId}` }, () => reload())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyId]);
 
   const serving = useMemo(() => entries.find((e) => e.status === "serving"), [entries]);
   const waiting = useMemo(() => entries.filter((e) => e.status === "waiting"), [entries]);
 
-  // Set up a dedicated broadcast channel to send ring events to the
-  // participant device. Kept separate from the postgres_changes channel.
   useEffect(() => {
     if (!lobbyId) return;
     const ch = supabase.channel(`ring-${lobbyId}`, { config: { broadcast: { self: false } } });
     ch.subscribe();
     ringChannelRef.current = ch;
-    return () => {
-      ringChannelRef.current = null;
-      supabase.removeChannel(ch);
-    };
+    return () => { ringChannelRef.current = null; supabase.removeChannel(ch); };
   }, [lobbyId]);
 
-  // Auto-stop ring if the ringing entry leaves the active queue (collected/cancelled)
   useEffect(() => {
     if (!ringingEntryId) return;
     const stillActive = entries.some(
@@ -114,7 +115,6 @@ const LobbyManage = () => {
       sendRingEvent(ringingEntryId, "stop");
       setRingingEntryId(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, ringingEntryId]);
 
   const toggleStatus = async () => {
@@ -170,8 +170,16 @@ const LobbyManage = () => {
         } catch (e: any) {
           toast.error(`Email failed: ${e.message ?? "unknown"}`);
         }
-      } else {
+      }
+
+      // Show share modal if no email — includes WhatsApp option
+      if (!addEmail.trim()) {
         setShareModal({ entry, url: tokenUrl });
+      }
+
+      // If phone provided, offer WhatsApp notification
+      if (addPhone.trim() && !addEmail.trim()) {
+        sendWhatsAppToken(addPhone.trim(), entry.name, entry.position, lobby.name, tokenUrl);
       }
 
       setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
@@ -267,12 +275,14 @@ const LobbyManage = () => {
               <Input id="add-name" placeholder="Full name" value={addName} onChange={(e) => setAddName(e.target.value)} maxLength={80} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="add-email">Email <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label htmlFor="add-email">Email <span className="text-muted-foreground text-xs">(optional — sends token)</span></Label>
               <Input id="add-email" type="email" placeholder="person@example.com" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} maxLength={120} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="add-phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
-              <Input id="add-phone" type="tel" placeholder="+1 555…" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
+              <Label htmlFor="add-phone">
+                Phone <span className="text-muted-foreground text-xs">(optional — enables WhatsApp)</span>
+              </Label>
+              <Input id="add-phone" type="tel" placeholder="+91 98765 43210" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
             </div>
             <div className="flex items-end gap-3">
               <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
@@ -293,7 +303,7 @@ const LobbyManage = () => {
           </div>
         </Card>
 
-        {/* QR for this lobby */}
+        {/* QR code */}
         <Card className="p-5">
           <h3 className="mb-4 font-semibold">Share / QR code</h3>
           <QrCard
@@ -361,6 +371,19 @@ const LobbyManage = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
+                      {/* WhatsApp call button — only if phone exists */}
+                      {e.phone && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-green-600 border-green-200 hover:bg-green-50"
+                          onClick={() => sendWhatsAppCall(e.phone!, e.name, lobby.name)}
+                          title="Notify via WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </Button>
+                      )}
                       {ringingEntryId === e.id ? (
                         <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
                           <BellOff className="h-4 w-4 sm:mr-1" />
@@ -388,16 +411,15 @@ const LobbyManage = () => {
         </Card>
       </main>
 
+      {/* Share modal */}
       <Dialog open={!!shareModal} onOpenChange={(o) => !o && setShareModal(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Token #{shareModal?.entry.position} assigned to {shareModal?.entry.name}</DialogTitle>
-            <DialogDescription>
-              No email was provided — share the token link directly.
-            </DialogDescription>
+            <DialogDescription>Share the token link with this person.</DialogDescription>
           </DialogHeader>
           <div className="rounded-lg bg-muted p-3 text-xs font-mono break-all">{shareModal?.url}</div>
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={async () => {
@@ -408,14 +430,26 @@ const LobbyManage = () => {
             >
               <Copy className="mr-1 h-4 w-4" /> Copy link
             </Button>
-            <Button asChild>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Your token is #${shareModal?.entry.position} — track here: ${shareModal?.url}`)}`}
+            <Button asChild variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
+              
+                href={`https://wa.me/?text=${encodeURIComponent(`Hi ${shareModal?.entry.name} 👋\n\nYour token is *#${shareModal?.entry.position}*\n\nTrack your queue position here:\n${shareModal?.url}\n\n_Powered by QueueSnap_`)}`}
                 target="_blank" rel="noreferrer"
               >
                 <MessageCircle className="mr-1 h-4 w-4" /> Share via WhatsApp
               </a>
             </Button>
+            {shareModal?.entry.phone && (
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => {
+                  if (!shareModal || !lobby) return;
+                  sendWhatsAppToken(shareModal.entry.phone!, shareModal.entry.name, shareModal.entry.position, lobby.name, shareModal.url);
+                  setShareModal(null);
+                }}
+              >
+                <MessageCircle className="mr-1 h-4 w-4" /> Send to their WhatsApp
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
