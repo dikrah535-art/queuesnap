@@ -424,14 +424,17 @@ const LobbyManage = () => {
             >
               <Copy className="mr-1 h-4 w-4" /> Copy link
             </Button>
-            <Button asChild variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
-              
-                href={`https://wa.me/?text=${encodeURIComponent(`Hi ${shareModal?.entry.name} 👋\n\nYour token is *#${shareModal?.entry.position}*\n\nTrack your queue position here:\n${shareModal?.url}\n\n_Powered by QueueSnap_`)}`}
-                target="_blank" rel="noreferrer"
-              >
-                <MessageCircle className="mr-1 h-4 w-4" /> Share via WhatsApp
-              </a>
-            </Button>
+           <Button
+  variant="outline"
+  className="text-green-600 border-green-200 hover:bg-green-50"
+  onClick={() => {
+    if (!shareModal) return;
+    const msg = `Hi ${shareModal.entry.name} 👋\n\nYour token is *#${shareModal.entry.position}*\n\nTrack your queue position here:\n${shareModal.url}\n\n_Powered by QueueSnap_`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  }}
+>
+  <MessageCircle className="mr-1 h-4 w-4" /> Share via WhatsApp
+</Button>
             {shareModal?.entry.phone && (
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white"
