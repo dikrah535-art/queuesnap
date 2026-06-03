@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Phone, PlayCircle, Power, Smartphone, Trash2, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,6 @@ import {
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 
-// WhatsApp helper functions
 const sendWhatsAppToken = (phone: string, name: string, position: number, queueName: string, tokenUrl: string) => {
   const msg = `Hi ${name} 👋\n\nYou've been added to *${queueName}*!\n\n🎫 *Your Token: #${position}*\n\nTrack your position in real time:\n${tokenUrl}\n\n_Powered by QueueSnap_`;
   window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -172,12 +171,10 @@ const LobbyManage = () => {
         }
       }
 
-      // Show share modal if no email — includes WhatsApp option
       if (!addEmail.trim()) {
         setShareModal({ entry, url: tokenUrl });
       }
 
-      // If phone provided, offer WhatsApp notification
       if (addPhone.trim() && !addEmail.trim()) {
         sendWhatsAppToken(addPhone.trim(), entry.name, entry.position, lobby.name, tokenUrl);
       }
@@ -231,6 +228,11 @@ const LobbyManage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/workspaces/${wsId}/lobbies/${lobbyId}/analytics`}>
+                <TrendingUp className="mr-1 h-4 w-4" /> Analytics
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" onClick={copyLink}><Copy className="mr-1 h-4 w-4" /> Share link</Button>
             <Button variant={lobby.status === "open" ? "outline" : "default"} size="sm" onClick={toggleStatus}>
               <Power className="mr-1 h-4 w-4" /> {lobby.status === "open" ? "Close" : "Open"}
@@ -241,7 +243,6 @@ const LobbyManage = () => {
       </header>
 
       <main className="container space-y-6 py-8">
-        {/* Live stats */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <Card className="p-5">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Total today</p>
@@ -266,7 +267,6 @@ const LobbyManage = () => {
           </Card>
         </div>
 
-        {/* Add person */}
         <Card className="p-5">
           <h3 className="mb-3 font-semibold">Add person manually</h3>
           <div className="grid gap-3 md:grid-cols-2">
@@ -279,9 +279,7 @@ const LobbyManage = () => {
               <Input id="add-email" type="email" placeholder="person@example.com" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} maxLength={120} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="add-phone">
-                Phone <span className="text-muted-foreground text-xs">(optional — enables WhatsApp)</span>
-              </Label>
+              <Label htmlFor="add-phone">Phone <span className="text-muted-foreground text-xs">(optional — enables WhatsApp)</span></Label>
               <Input id="add-phone" type="tel" placeholder="+91 98765 43210" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
             </div>
             <div className="flex items-end gap-3">
@@ -303,7 +301,6 @@ const LobbyManage = () => {
           </div>
         </Card>
 
-        {/* QR code */}
         <Card className="p-5">
           <h3 className="mb-4 font-semibold">Share / QR code</h3>
           <QrCard
@@ -312,7 +309,6 @@ const LobbyManage = () => {
           />
         </Card>
 
-        {/* Queue list */}
         <Card className="p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-semibold">Queue</h3>
@@ -371,7 +367,6 @@ const LobbyManage = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {/* WhatsApp call button — only if phone exists */}
                       {e.phone && (
                         <Button
                           variant="outline"
@@ -411,7 +406,6 @@ const LobbyManage = () => {
         </Card>
       </main>
 
-      {/* Share modal */}
       <Dialog open={!!shareModal} onOpenChange={(o) => !o && setShareModal(null)}>
         <DialogContent>
           <DialogHeader>
