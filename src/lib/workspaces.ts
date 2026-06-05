@@ -369,3 +369,10 @@ export async function sendTokenEmail(input: {
 export async function markNotified(entryId: string) {
   await supabase.from("queue_entries").update({ notified_email: true } as never).eq("id", entryId);
 }
+
+export async function fetchEstimatedWaitSeconds(lobbyId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("estimated_wait_seconds" as never, { _lobby_id: lobbyId } as never);
+  if (error) return 180;
+  return (data as unknown as number) ?? 180;
+}
+

@@ -13,10 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
 import { getJoinUrl } from "@/lib/urls";
 import {
-  cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
+  cancelEntry, fetchEstimatedWaitSeconds, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+import { ServiceRatingCard } from "@/components/ServiceRatingCard";
 
 const JoinLobby = () => {
   const navigate = useNavigate();
