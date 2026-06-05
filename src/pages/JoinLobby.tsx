@@ -213,7 +213,7 @@ const JoinLobby = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  const total = entries.length;
+  const total = entries.filter((e) => e.status === "waiting" || e.status === "serving").length;
   const full = total >= lobby.max_capacity;
   const closed = lobby.status !== "open";
 
