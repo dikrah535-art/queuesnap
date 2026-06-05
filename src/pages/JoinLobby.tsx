@@ -321,6 +321,15 @@ const JoinLobby = () => {
             </div>
           )}
         </Card>
+
+        {myEntry && (myEntry.status === "served" || myEntry.status === "collected") && lobby.workspace_id && (
+          <ServiceRatingCard
+            entryId={myEntry.id}
+            lobbyId={lobby.id}
+            workspaceId={lobby.workspace_id}
+            queueName={lobby.name}
+          />
+        )}
       </main>
     </div>
   );
