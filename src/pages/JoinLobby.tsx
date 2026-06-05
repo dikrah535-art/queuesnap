@@ -67,7 +67,7 @@ const JoinLobby = () => {
   const reload = async () => {
     if (!lobbyId) return;
     try {
-      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId, { includeAll: !!tokenIdParam })]);
+      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId, { includeAll: true })]);
       setLobby(l); setEntries(es);
 
       // Find my entry — prefer ?token=X (from email link)
