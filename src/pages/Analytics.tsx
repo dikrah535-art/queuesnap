@@ -58,7 +58,7 @@ const Analytics = () => {
       ]);
       setLobby(l);
       if (error) throw error;
-      setAnalytics(data as Analytics);
+      setAnalytics(data as unknown as Analytics);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to load analytics");
     } finally {
