@@ -34,6 +34,7 @@ const JoinLobby = () => {
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
+  const [avgServiceSec, setAvgServiceSec] = useState<number>(180);
   const prevStatusRef = useRef<string | null>(null);
   const { ringing, start: startRing, stop: stopRing } = useRingTone();
   const isDemo = lobbyKey === "demo" || lobby?.slug === "demo";
@@ -196,7 +197,8 @@ const JoinLobby = () => {
   );
   if (!lobby) return <div className="grid min-h-screen place-items-center text-muted-foreground">Lobby not found</div>;
 
-  const eta = position > 0 ? position * 3 : 0;
+  const etaSec = position > 0 ? Math.max(60, avgServiceSec) * position : 0;
+  const eta = Math.round(etaSec / 60);
   const shareMyPosition = () => {
     const text = `I'm #${position} in queue at ${lobby.name} — join here: ${getJoinUrl(lobby.id)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
