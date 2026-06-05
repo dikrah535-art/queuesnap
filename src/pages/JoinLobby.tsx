@@ -107,6 +107,11 @@ const JoinLobby = () => {
 
   useEffect(() => {
     if (!lobbyId) return;
+    fetchEstimatedWaitSeconds(lobbyId).then(setAvgServiceSec).catch(() => {});
+  }, [lobbyId, entries.length]);
+
+  useEffect(() => {
+    if (!lobbyId) return;
     const ch = supabase
       .channel(`join-${lobbyId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "queue_entries", filter: `lobby_id=eq.${lobbyId}` }, () => reload())
