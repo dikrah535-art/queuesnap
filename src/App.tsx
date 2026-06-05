@@ -23,6 +23,8 @@ import Analytics from "./pages/Analytics";
 import JoinLobby from "./pages/JoinLobby";
 import AdminDemoVisitors from "./pages/AdminDemoVisitors";
 import LobbyPrint from "./pages/LobbyPrint";
+import DisplayView from "./pages/DisplayView";
+import GlobalOverview from "./pages/GlobalOverview";
 import { AdminGuard } from "./components/AdminGuard";
 import { WorkspaceAuthGate } from "./components/workspace/WorkspaceAuthGate";
 import { RecoveryWatcher } from "./components/RecoveryWatcher";
@@ -58,6 +60,8 @@ const App = () => (
             <Route path="/workspaces/:wsId/lobbies/:lobbyId" element={<WorkspaceAuthGate><LobbyManage /></WorkspaceAuthGate>} />
             <Route path="/workspaces/:wsId/lobbies/:lobbyId/analytics" element={<WorkspaceAuthGate><Analytics /></WorkspaceAuthGate>} />
             <Route path="/join/:lobbyId" element={<JoinLobby />} />
+            <Route path="/display/:lobbyId" element={<DisplayView />} />
+            <Route path="/overview" element={<WorkspaceAuthGate><GlobalOverview /></WorkspaceAuthGate>} />
             <Route path="/admin/lobby/:lobbyId/print" element={<LobbyPrint />} />
             <Route path="/admin/demo-visitors" element={<WorkspaceAuthGate><AdminDemoVisitors /></WorkspaceAuthGate>} />
             <Route path="*" element={<NotFound />} />

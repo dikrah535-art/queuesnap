@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -253,6 +253,11 @@ const LobbyManage = () => {
           </div>
           <div className="flex items-center gap-2">
             <InstallPWA />
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/display/${lobbyId}`} target="_blank">
+                <Monitor className="mr-1 h-4 w-4" /> Display
+              </Link>
+            </Button>
             <Button asChild variant="outline" size="sm">
               <Link to={`/workspaces/${wsId}/lobbies/${lobbyId}/analytics`}>
                 <TrendingUp className="mr-1 h-4 w-4" /> Analytics

@@ -170,6 +170,9 @@ const Workspaces = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
+              <Link to="/overview">Global Overview</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
               <Link to="/admin/demo-visitors">Demo Visitors</Link>
             </Button>
             <Dialog open={open} onOpenChange={handleOpenChange}>

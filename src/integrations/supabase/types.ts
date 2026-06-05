@@ -236,6 +236,58 @@ export type Database = {
           },
         ]
       }
+      service_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          entry_id: string
+          id: string
+          lobby_id: string
+          rating: number
+          workspace_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          entry_id: string
+          id?: string
+          lobby_id: string
+          rating: number
+          workspace_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          entry_id?: string
+          id?: string
+          lobby_id?: string
+          rating?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_ratings_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: true
+            referencedRelation: "queue_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_ratings_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_ratings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       slots: {
         Row: {
           created_at: string
@@ -405,6 +457,7 @@ export type Database = {
       }
       clear_queue: { Args: { _lobby_id: string }; Returns: number }
       count_demo_waiting: { Args: never; Returns: number }
+      estimated_wait_seconds: { Args: { _lobby_id: string }; Returns: number }
       fetch_lobby_entries_admin: {
         Args: { _include_all?: boolean; _lobby_id: string }
         Returns: {
@@ -429,6 +482,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_global_overview: { Args: never; Returns: Json }
       get_lobby_analytics: {
         Args: { _days?: number; _lobby_id: string }
         Returns: Json

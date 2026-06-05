@@ -13,10 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
 import { getJoinUrl } from "@/lib/urls";
 import {
-  cancelEntry, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
+  cancelEntry, fetchEstimatedWaitSeconds, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+import { ServiceRatingCard } from "@/components/ServiceRatingCard";
 
 const JoinLobby = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const JoinLobby = () => {
   const [deviceType, setDeviceType] = useState("");
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
+  const [avgServiceSec, setAvgServiceSec] = useState<number>(180);
   const prevStatusRef = useRef<string | null>(null);
   const { ringing, start: startRing, stop: stopRing } = useRingTone();
   const isDemo = lobbyKey === "demo" || lobby?.slug === "demo";
@@ -65,7 +67,7 @@ const JoinLobby = () => {
   const reload = async () => {
     if (!lobbyId) return;
     try {
-      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId, { includeAll: !!tokenIdParam })]);
+      const [l, es] = await Promise.all([fetchLobby(lobbyId), fetchQueueEntries(lobbyId, { includeAll: true })]);
       setLobby(l); setEntries(es);
 
       // Find my entry — prefer ?token=X (from email link)
@@ -102,6 +104,11 @@ const JoinLobby = () => {
   }, [lobbyKey]);
 
   useEffect(() => { reload(); }, [lobbyId]);
+
+  useEffect(() => {
+    if (!lobbyId) return;
+    fetchEstimatedWaitSeconds(lobbyId).then(setAvgServiceSec).catch(() => {});
+  }, [lobbyId, entries.length]);
 
   useEffect(() => {
     if (!lobbyId) return;
@@ -195,7 +202,8 @@ const JoinLobby = () => {
   );
   if (!lobby) return <div className="grid min-h-screen place-items-center text-muted-foreground">Lobby not found</div>;
 
-  const eta = position > 0 ? position * 3 : 0;
+  const etaSec = position > 0 ? Math.max(60, avgServiceSec) * position : 0;
+  const eta = Math.round(etaSec / 60);
   const shareMyPosition = () => {
     const text = `I'm #${position} in queue at ${lobby.name} — join here: ${getJoinUrl(lobby.id)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
@@ -205,7 +213,7 @@ const JoinLobby = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  const total = entries.length;
+  const total = entries.filter((e) => e.status === "waiting" || e.status === "serving").length;
   const full = total >= lobby.max_capacity;
   const closed = lobby.status !== "open";
 
@@ -313,6 +321,15 @@ const JoinLobby = () => {
             </div>
           )}
         </Card>
+
+        {myEntry && (myEntry.status === "served" || myEntry.status === "collected") && lobby.workspace_id && (
+          <ServiceRatingCard
+            entryId={myEntry.id}
+            lobbyId={lobby.id}
+            workspaceId={lobby.workspace_id}
+            queueName={lobby.name}
+          />
+        )}
       </main>
     </div>
   );
