@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QrCard } from "@/components/workspace/QrCard";
+import { InstallPWA } from "@/components/InstallPWA";
 import { getJoinUrl, getTokenUrl } from "@/lib/urls";
 import {
   adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
@@ -126,9 +127,32 @@ const LobbyManage = () => {
   };
 
   const onServeNext = async () => {
-    if (!lobbyId) return;
-    try { await serveNext(lobbyId); toast.success("Next person called"); }
-    catch (e: any) { toast.error(e.message ?? "Failed"); }
+    if (!lobbyId || !lobby) return;
+    try {
+      const next = await serveNext(lobbyId);
+      toast.success("Next person called");
+      if (next) {
+        const tokenUrl = getTokenUrl(lobbyId, next.id);
+        if (next.email) {
+          try {
+            await sendTokenEmail({
+              email: next.email,
+              name: next.name,
+              tokenNumber: next.position,
+              queueName: lobby.name,
+              tokenUrl,
+              type: "turn",
+            });
+            toast.success(`🔔 Notified ${next.name} by email`);
+          } catch (e: any) {
+            toast.error(`Email failed: ${e.message ?? "unknown"}`);
+          }
+        }
+        if (next.phone) {
+          sendWhatsAppCall(next.phone, next.name, lobby.name);
+        }
+      }
+    } catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
   const onClear = async () => {
@@ -228,6 +252,7 @@ const LobbyManage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <InstallPWA />
             <Button asChild variant="outline" size="sm">
               <Link to={`/workspaces/${wsId}/lobbies/${lobbyId}/analytics`}>
                 <TrendingUp className="mr-1 h-4 w-4" /> Analytics

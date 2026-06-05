@@ -360,6 +360,7 @@ export async function adminAddEntry(input: {
 
 export async function sendTokenEmail(input: {
   email: string; name: string; tokenNumber: number; queueName: string; tokenUrl: string;
+  type?: "token" | "turn";
 }) {
   const { error } = await supabase.functions.invoke("notify-email", { body: input });
   if (error) throw error;

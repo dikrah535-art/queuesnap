@@ -9,6 +9,7 @@ interface Body {
   tokenNumber: number | string;
   queueName: string;
   tokenUrl: string;
+  type?: "token" | "turn";
 }
 
 Deno.serve(async (req) => {
@@ -27,21 +28,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    const isTurn = body.type === "turn";
+    const subject = isTurn
+      ? `🔔 It's your turn at ${body.queueName} — Token #${body.tokenNumber}`
+      : `You've been added to the queue — Token #${body.tokenNumber}`;
+
+    const heading = isTurn ? "It's your turn! 🔔" : `Hi ${body.name} 👋`;
+    const intro = isTurn
+      ? `Hi ${body.name}, please proceed to the counter at <strong>${body.queueName}</strong> now.`
+      : `You've been added to the queue for <strong>${body.queueName}</strong> by the admin.`;
+    const ctaLabel = isTurn ? "Open My Token →" : "View My Token Status →";
+    const tokenLabel = isTurn ? "Now Serving" : "Your Token Number";
+    const accent = isTurn ? "#16a34a" : "#4f46e5";
+
     const html = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f172a;background:#ffffff">
-        <h2 style="margin:0 0 8px;font-size:22px">Hi ${body.name} 👋</h2>
-        <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.5">
-          You've been added to the queue for <strong>${body.queueName}</strong> by the admin.
-        </p>
+        <h2 style="margin:0 0 8px;font-size:22px">${heading}</h2>
+        <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.5">${intro}</p>
         <div style="background:#f1f5f9;border-radius:14px;padding:28px;text-align:center;margin:20px 0">
-          <p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b">Your Token Number</p>
-          <p style="margin:10px 0 0;font-size:54px;font-weight:800;color:#4f46e5;letter-spacing:-0.02em">#${body.tokenNumber}</p>
+          <p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b">${tokenLabel}</p>
+          <p style="margin:10px 0 0;font-size:54px;font-weight:800;color:${accent};letter-spacing:-0.02em">#${body.tokenNumber}</p>
         </div>
-        <p style="margin:0 0 24px;color:#475569;font-size:14px;line-height:1.5;text-align:center">
-          Track your position in real time — see exactly when it's your turn, no app download needed.
-        </p>
         <p style="text-align:center;margin:24px 0">
-          <a href="${body.tokenUrl}" style="background:#4f46e5;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;display:inline-block;font-size:15px">View My Token Status →</a>
+          <a href="${body.tokenUrl}" style="background:${accent};color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;display:inline-block;font-size:15px">${ctaLabel}</a>
         </p>
         <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:32px">Powered by QueueSnap • No account needed</p>
       </div>
@@ -56,7 +65,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "QueueSnap <onboarding@resend.dev>",
         to: body.email,
-        subject: `You've been added to the queue — Token #${body.tokenNumber}`,
+        subject,
         html,
       }),
     });

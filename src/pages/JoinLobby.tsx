@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InstallPWA } from "@/components/InstallPWA";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
@@ -220,7 +221,10 @@ const JoinLobby = () => {
           >
             <ArrowLeft className="mr-1 h-4 w-4" /> Back
           </Button>
-          <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
+          <div className="flex items-center gap-3">
+            <InstallPWA />
+            <Link to="/" className="text-lg font-semibold tracking-tight">QueueSnap</Link>
+          </div>
         </div>
       </header>
 
