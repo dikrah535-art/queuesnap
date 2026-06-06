@@ -38,10 +38,12 @@ export interface QueueEntry {
   is_vip?: boolean;
   notified_email?: boolean;
   device_type: string | null;
+  service_type?: string | null;
   position: number;
   status: QueueEntryStatus;
   created_at: string;
   served_at: string | null;
+  last_confirmed_at?: string | null;
 }
 
 export interface WorkspaceMember {
