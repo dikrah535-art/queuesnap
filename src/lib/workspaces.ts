@@ -203,7 +203,7 @@ export async function fetchLobbyEntriesAdmin(
 export async function joinLobby(
   lobbyId: string,
   name: string,
-  extra: { phone?: string; deviceType?: string } = {},
+  extra: { phone?: string; deviceType?: string; serviceType?: string } = {},
 ) {
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase.rpc("join_lobby", {
@@ -212,6 +212,7 @@ export async function joinLobby(
     _user_id: user?.id ?? null,
     _phone: extra.phone ?? null,
     _device_type: extra.deviceType ?? null,
+    _service_type: extra.serviceType ?? null,
   } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
@@ -219,6 +220,18 @@ export async function joinLobby(
 
 export async function markCollected(entryId: string) {
   const { data, error } = await supabase.rpc("mark_collected", { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function markNoShow(entryId: string) {
+  const { data, error } = await supabase.rpc("mark_no_show" as never, { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function confirmPresence(entryId: string) {
+  const { data, error } = await supabase.rpc("confirm_presence" as never, { _entry_id: entryId } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
 }
