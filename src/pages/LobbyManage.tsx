@@ -370,13 +370,34 @@ const LobbyManage = () => {
               className="max-w-xs"
             />
           </div>
+          <Tabs value={serviceFilter} onValueChange={setServiceFilter} className="mb-4">
+            <TabsList className="flex flex-wrap h-auto">
+              <TabsTrigger value="all">All ({entries.length})</TabsTrigger>
+              {SERVICE_TYPES.map((s) => {
+                const n = entries.filter((e) => e.service_type === s).length;
+                return <TabsTrigger key={s} value={s}>{s} ({n})</TabsTrigger>;
+              })}
+              <TabsTrigger value="__none">Unspecified ({entries.filter((e) => !e.service_type).length})</TabsTrigger>
+            </TabsList>
+          </Tabs>
           {(() => {
             const q = search.trim().toLowerCase();
+            const byService = serviceFilter === "all"
+              ? entries
+              : serviceFilter === "__none"
+                ? entries.filter((e) => !e.service_type)
+                : entries.filter((e) => e.service_type === serviceFilter);
             const filtered = q
-              ? entries.filter((e) =>
+              ? byService.filter((e) =>
                   e.name.toLowerCase().includes(q) || (e.phone ?? "").toLowerCase().includes(q),
                 )
-              : entries;
+              : byService;
+            if (entries.length === 0) {
+              return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
+            }
+            if (filtered.length === 0) {
+              return <p className="py-12 text-center text-sm text-muted-foreground">No matches.</p>;
+            }
             if (entries.length === 0) {
               return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
             }
