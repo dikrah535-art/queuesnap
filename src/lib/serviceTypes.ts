@@ -1,2 +1,9 @@
-export const SERVICE_TYPES = ["Quick Service", "Consultation", "Repair"] as const;
-export type ServiceType = (typeof SERVICE_TYPES)[number];
+export const SERVICE_TYPES = [
+  "Device Submission",
+  "Device Collection",
+  "Registration",
+  "Certificate",
+  "Fee Payment",
+  "Enquiry",
+  "Other",
+] as const;
