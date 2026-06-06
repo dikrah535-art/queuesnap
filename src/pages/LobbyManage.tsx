@@ -435,6 +435,7 @@ const LobbyManage = () => {
                           )}
                           {e.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {e.phone}</span>}
                           {e.device_type && <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3" /> {e.device_type}</span>}
+                          {e.service_type && <span className="inline-flex items-center rounded-full bg-accent/40 px-2 py-0.5 text-[10px] font-medium">{e.service_type}</span>}
                         </div>
                       </div>
                     </div>
