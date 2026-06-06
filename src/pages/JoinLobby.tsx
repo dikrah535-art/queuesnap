@@ -338,6 +338,17 @@ const JoinLobby = () => {
                   placeholder="e.g. +91 98765 43210" disabled={closed || full} autoComplete="tel" />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="service">Service type</Label>
+                <Select value={serviceType} onValueChange={setServiceType} disabled={closed || full}>
+                  <SelectTrigger id="service"><SelectValue placeholder="Select a service" /></SelectTrigger>
+                  <SelectContent>
+                    {SERVICE_TYPES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="device">Device type <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Input id="device" value={deviceType} onChange={(e) => setDeviceType(e.target.value)} maxLength={80}
                   placeholder="e.g. iPhone 14, Laptop" disabled={closed || full} />
