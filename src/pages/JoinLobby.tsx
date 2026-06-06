@@ -13,10 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
 import { getJoinUrl } from "@/lib/urls";
 import {
-  cancelEntry, fetchEstimatedWaitSeconds, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
+  cancelEntry, confirmPresence, fetchEstimatedWaitSeconds, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+import { SERVICE_TYPES } from "@/lib/serviceTypes";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceRatingCard } from "@/components/ServiceRatingCard";
 
 const JoinLobby = () => {
