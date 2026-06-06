@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type WorkspaceRole = "owner" | "admin" | "member";
 export type LobbyStatus = "open" | "closed";
-export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected";
+export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected" | "no_show";
 
 export interface Workspace {
   id: string;
@@ -38,10 +38,12 @@ export interface QueueEntry {
   is_vip?: boolean;
   notified_email?: boolean;
   device_type: string | null;
+  service_type?: string | null;
   position: number;
   status: QueueEntryStatus;
   created_at: string;
   served_at: string | null;
+  last_confirmed_at?: string | null;
 }
 
 export interface WorkspaceMember {
@@ -178,7 +180,7 @@ export async function fetchQueueEntries(
 ) {
   let q = supabase
     .from("queue_entries")
-    .select("id, lobby_id, user_id, name, device_type, position, status, created_at, served_at")
+    .select("id, lobby_id, user_id, name, device_type, service_type, position, status, created_at, served_at, last_confirmed_at")
     .eq("lobby_id", lobbyId);
   if (!opts.includeAll) q = q.in("status", ["waiting", "serving"]);
   const { data, error } = await q.order("position", { ascending: true });
@@ -201,7 +203,7 @@ export async function fetchLobbyEntriesAdmin(
 export async function joinLobby(
   lobbyId: string,
   name: string,
-  extra: { phone?: string; deviceType?: string } = {},
+  extra: { phone?: string; deviceType?: string; serviceType?: string } = {},
 ) {
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase.rpc("join_lobby", {
@@ -210,6 +212,7 @@ export async function joinLobby(
     _user_id: user?.id ?? null,
     _phone: extra.phone ?? null,
     _device_type: extra.deviceType ?? null,
+    _service_type: extra.serviceType ?? null,
   } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
@@ -217,6 +220,18 @@ export async function joinLobby(
 
 export async function markCollected(entryId: string) {
   const { data, error } = await supabase.rpc("mark_collected", { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function markNoShow(entryId: string) {
+  const { data, error } = await supabase.rpc("mark_no_show" as never, { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function confirmPresence(entryId: string) {
+  const { data, error } = await supabase.rpc("confirm_presence" as never, { _entry_id: entryId } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
 }
@@ -344,7 +359,7 @@ export async function fetchDemoVisitors(): Promise<DemoVisitor[]> {
 }
 
 export async function adminAddEntry(input: {
-  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string; isVip?: boolean;
+  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string; isVip?: boolean; serviceType?: string;
 }) {
   const { data, error } = await supabase.rpc("admin_add_entry", {
     _lobby_id: input.lobbyId,
@@ -353,6 +368,7 @@ export async function adminAddEntry(input: {
     _email: input.email ?? null,
     _device_type: input.deviceType ?? null,
     _is_vip: input.isVip ?? false,
+    _service_type: input.serviceType ?? null,
   } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;

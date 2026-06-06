@@ -13,10 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRingTone } from "@/lib/useRingTone";
 import { getJoinUrl } from "@/lib/urls";
 import {
-  cancelEntry, fetchEstimatedWaitSeconds, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
+  cancelEntry, confirmPresence, fetchEstimatedWaitSeconds, fetchLobby, fetchQueueEntries, forgetAnonEntry, getAnonEntryFor,
   joinLobby, recordDemoVisitor, rememberAnonEntry, resolveLobbyKey,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+import { SERVICE_TYPES } from "@/lib/serviceTypes";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceRatingCard } from "@/components/ServiceRatingCard";
 
 const JoinLobby = () => {
@@ -32,6 +34,8 @@ const JoinLobby = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [deviceType, setDeviceType] = useState("");
+  const [serviceType, setServiceType] = useState<string>("");
+  const [needsConfirm, setNeedsConfirm] = useState(false);
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
   const [avgServiceSec, setAvgServiceSec] = useState<number>(180);
@@ -63,6 +67,32 @@ const JoinLobby = () => {
     }
     prevStatusRef.current = curr;
   }, [myEntry?.status]);
+
+  // Check-in confirmation nudge: prompt every 10 min if not served yet
+  useEffect(() => {
+    if (!myEntry || (myEntry.status !== "waiting" && myEntry.status !== "serving")) {
+      setNeedsConfirm(false);
+      return;
+    }
+    const NUDGE_MS = 10 * 60 * 1000; // 10 minutes
+    const check = () => {
+      const last = new Date(myEntry.last_confirmed_at ?? myEntry.created_at).getTime();
+      if (Date.now() - last > NUDGE_MS) setNeedsConfirm(true);
+    };
+    check();
+    const t = setInterval(check, 30 * 1000);
+    return () => clearInterval(t);
+  }, [myEntry?.id, myEntry?.last_confirmed_at, myEntry?.status]);
+
+  const onConfirmPresence = async () => {
+    if (!myEntry) return;
+    try {
+      const updated = await confirmPresence(myEntry.id);
+      setMyEntry(updated);
+      setNeedsConfirm(false);
+      toast.success("Presence confirmed — you're still in the queue");
+    } catch (e: any) { toast.error(e.message ?? "Failed to confirm"); }
+  };
 
   const reload = async () => {
     if (!lobbyId) return;
@@ -161,6 +191,7 @@ const JoinLobby = () => {
       const entry = await joinLobby(lobbyId, name, {
         phone: phone.trim() || undefined,
         deviceType: deviceType.trim() || undefined,
+        serviceType: serviceType || undefined,
       });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
@@ -278,6 +309,20 @@ const JoinLobby = () => {
                 </>
               )}
               <p className="mt-4 text-sm">Joined as <span className="font-medium">{myEntry.name}</span></p>
+              {myEntry.service_type && (
+                <p className="mt-1 text-xs text-muted-foreground">Service: {myEntry.service_type}</p>
+              )}
+              {needsConfirm && myEntry.status === "waiting" && (
+                <div className="mt-4 rounded-lg border border-primary/40 bg-primary/5 p-3 text-left">
+                  <p className="text-sm font-medium">Are you still here?</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tap below to keep your spot. Unconfirmed visitors may be marked as no-show.
+                  </p>
+                  <Button size="sm" className="mt-2 w-full" onClick={onConfirmPresence}>
+                    <Check className="mr-1 h-4 w-4" /> Confirm presence
+                  </Button>
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Button variant="outline" size="sm" className="min-h-[44px]" onClick={shareMyPosition}>
                   <Share2 className="mr-1 h-4 w-4" /> Share position
@@ -305,6 +350,17 @@ const JoinLobby = () => {
                 <Label htmlFor="phone">Phone number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={32}
                   placeholder="e.g. +91 98765 43210" disabled={closed || full} autoComplete="tel" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="service">Service type</Label>
+                <Select value={serviceType} onValueChange={setServiceType} disabled={closed || full}>
+                  <SelectTrigger id="service"><SelectValue placeholder="Select a service" /></SelectTrigger>
+                  <SelectContent>
+                    {SERVICE_TYPES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="device">Device type <span className="text-muted-foreground text-xs">(optional)</span></Label>

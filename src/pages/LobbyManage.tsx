@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,9 +16,10 @@ import { InstallPWA } from "@/components/InstallPWA";
 import { getJoinUrl, getTokenUrl } from "@/lib/urls";
 import {
   adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
-  markCollected, markNotified, sendTokenEmail, serveNext, updateLobby,
+  markCollected, markNoShow, markNotified, sendTokenEmail, serveNext, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+import { SERVICE_TYPES } from "@/lib/serviceTypes";
 
 const sendWhatsAppToken = (phone: string, name: string, position: number, queueName: string, tokenUrl: string) => {
   const msg = `Hi ${name} 👋\n\nYou've been added to *${queueName}*!\n\n🎫 *Your Token: #${position}*\n\nTrack your position in real time:\n${tokenUrl}\n\n_Powered by QueueSnap_`;
@@ -38,6 +41,8 @@ const LobbyManage = () => {
   const [addEmail, setAddEmail] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addVip, setAddVip] = useState(false);
+  const [addServiceType, setAddServiceType] = useState<string>("");
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [adding, setAdding] = useState(false);
   const [shareModal, setShareModal] = useState<{ entry: QueueEntry; url: string } | null>(null);
   const [search, setSearch] = useState("");
@@ -175,6 +180,7 @@ const LobbyManage = () => {
         email: addEmail.trim() || undefined,
         phone: addPhone.trim() || undefined,
         isVip: addVip,
+        serviceType: addServiceType || undefined,
       });
       const tokenUrl = getTokenUrl(lobbyId, entry.id);
       toast.success(`Token #${entry.position} assigned to ${entry.name}`);
@@ -203,7 +209,7 @@ const LobbyManage = () => {
         sendWhatsAppToken(addPhone.trim(), entry.name, entry.position, lobby.name, tokenUrl);
       }
 
-      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
+      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false); setAddServiceType("");
     } catch (e: any) {
       toast.error(e.message ?? "Failed to add");
     } finally { setAdding(false); }
@@ -217,6 +223,12 @@ const LobbyManage = () => {
 
   const onCollected = async (id: string) => {
     try { await markCollected(id); toast.success("Marked as collected ✅"); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const onNoShow = async (id: string, name: string) => {
+    if (!confirm(`Mark ${name} as no-show? They will be removed from the queue.`)) return;
+    try { await markNoShow(id); toast.success(`${name} marked as no-show`); }
     catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
@@ -312,6 +324,15 @@ const LobbyManage = () => {
               <Label htmlFor="add-phone">Phone <span className="text-muted-foreground text-xs">(optional — enables WhatsApp)</span></Label>
               <Input id="add-phone" type="tel" placeholder="+91 98765 43210" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-service">Service type</Label>
+              <Select value={addServiceType} onValueChange={setAddServiceType}>
+                <SelectTrigger id="add-service"><SelectValue placeholder="Select a service (optional)" /></SelectTrigger>
+                <SelectContent>
+                  {SERVICE_TYPES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end gap-3">
               <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
                 <Crown className={`h-4 w-4 ${addVip ? "text-amber-500" : "text-muted-foreground"}`} />
@@ -349,13 +370,34 @@ const LobbyManage = () => {
               className="max-w-xs"
             />
           </div>
+          <Tabs value={serviceFilter} onValueChange={setServiceFilter} className="mb-4">
+            <TabsList className="flex flex-wrap h-auto">
+              <TabsTrigger value="all">All ({entries.length})</TabsTrigger>
+              {SERVICE_TYPES.map((s) => {
+                const n = entries.filter((e) => e.service_type === s).length;
+                return <TabsTrigger key={s} value={s}>{s} ({n})</TabsTrigger>;
+              })}
+              <TabsTrigger value="__none">Unspecified ({entries.filter((e) => !e.service_type).length})</TabsTrigger>
+            </TabsList>
+          </Tabs>
           {(() => {
             const q = search.trim().toLowerCase();
+            const byService = serviceFilter === "all"
+              ? entries
+              : serviceFilter === "__none"
+                ? entries.filter((e) => !e.service_type)
+                : entries.filter((e) => e.service_type === serviceFilter);
             const filtered = q
-              ? entries.filter((e) =>
+              ? byService.filter((e) =>
                   e.name.toLowerCase().includes(q) || (e.phone ?? "").toLowerCase().includes(q),
                 )
-              : entries;
+              : byService;
+            if (entries.length === 0) {
+              return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
+            }
+            if (filtered.length === 0) {
+              return <p className="py-12 text-center text-sm text-muted-foreground">No matches.</p>;
+            }
             if (entries.length === 0) {
               return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
             }
@@ -393,6 +435,7 @@ const LobbyManage = () => {
                           )}
                           {e.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {e.phone}</span>}
                           {e.device_type && <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3" /> {e.device_type}</span>}
+                          {e.service_type && <span className="inline-flex items-center rounded-full bg-accent/40 px-2 py-0.5 text-[10px] font-medium">{e.service_type}</span>}
                         </div>
                       </div>
                     </div>
@@ -423,6 +466,16 @@ const LobbyManage = () => {
                       <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Device returned to owner">
                         <Undo2 className="h-4 w-4 sm:mr-1" />
                         <span className="hidden sm:inline">Return</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onNoShow(e.id, e.name)}
+                        title="Mark as no-show"
+                        className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                      >
+                        <UserX className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">No-show</span>
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => onRemove(e.id)} aria-label="Remove">
                         <X className="h-4 w-4" />
