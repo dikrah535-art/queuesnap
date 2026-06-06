@@ -226,6 +226,12 @@ const LobbyManage = () => {
     catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
+  const onNoShow = async (id: string, name: string) => {
+    if (!confirm(`Mark ${name} as no-show? They will be removed from the queue.`)) return;
+    try { await markNoShow(id); toast.success(`${name} marked as no-show`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
   const onDeleteLobby = async () => {
     if (!lobby) return;
     if (!confirm(`Delete lobby "${lobby.name}"? This cannot be undone.`)) return;
