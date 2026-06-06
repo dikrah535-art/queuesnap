@@ -68,6 +68,32 @@ const JoinLobby = () => {
     prevStatusRef.current = curr;
   }, [myEntry?.status]);
 
+  // Check-in confirmation nudge: prompt every 10 min if not served yet
+  useEffect(() => {
+    if (!myEntry || (myEntry.status !== "waiting" && myEntry.status !== "serving")) {
+      setNeedsConfirm(false);
+      return;
+    }
+    const NUDGE_MS = 10 * 60 * 1000; // 10 minutes
+    const check = () => {
+      const last = new Date(myEntry.last_confirmed_at ?? myEntry.created_at).getTime();
+      if (Date.now() - last > NUDGE_MS) setNeedsConfirm(true);
+    };
+    check();
+    const t = setInterval(check, 30 * 1000);
+    return () => clearInterval(t);
+  }, [myEntry?.id, myEntry?.last_confirmed_at, myEntry?.status]);
+
+  const onConfirmPresence = async () => {
+    if (!myEntry) return;
+    try {
+      const updated = await confirmPresence(myEntry.id);
+      setMyEntry(updated);
+      setNeedsConfirm(false);
+      toast.success("Presence confirmed — you're still in the queue");
+    } catch (e: any) { toast.error(e.message ?? "Failed to confirm"); }
+  };
+
   const reload = async () => {
     if (!lobbyId) return;
     try {
