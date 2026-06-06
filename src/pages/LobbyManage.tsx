@@ -180,6 +180,7 @@ const LobbyManage = () => {
         email: addEmail.trim() || undefined,
         phone: addPhone.trim() || undefined,
         isVip: addVip,
+        serviceType: addServiceType || undefined,
       });
       const tokenUrl = getTokenUrl(lobbyId, entry.id);
       toast.success(`Token #${entry.position} assigned to ${entry.name}`);
