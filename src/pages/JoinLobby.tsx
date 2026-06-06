@@ -165,6 +165,7 @@ const JoinLobby = () => {
       const entry = await joinLobby(lobbyId, name, {
         phone: phone.trim() || undefined,
         deviceType: deviceType.trim() || undefined,
+        serviceType: serviceType || undefined,
       });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
