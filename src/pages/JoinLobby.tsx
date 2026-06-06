@@ -309,6 +309,20 @@ const JoinLobby = () => {
                 </>
               )}
               <p className="mt-4 text-sm">Joined as <span className="font-medium">{myEntry.name}</span></p>
+              {myEntry.service_type && (
+                <p className="mt-1 text-xs text-muted-foreground">Service: {myEntry.service_type}</p>
+              )}
+              {needsConfirm && myEntry.status === "waiting" && (
+                <div className="mt-4 rounded-lg border border-primary/40 bg-primary/5 p-3 text-left">
+                  <p className="text-sm font-medium">Are you still here?</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tap below to keep your spot. Unconfirmed visitors may be marked as no-show.
+                  </p>
+                  <Button size="sm" className="mt-2 w-full" onClick={onConfirmPresence}>
+                    <Check className="mr-1 h-4 w-4" /> Confirm presence
+                  </Button>
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Button variant="outline" size="sm" className="min-h-[44px]" onClick={shareMyPosition}>
                   <Share2 className="mr-1 h-4 w-4" /> Share position
