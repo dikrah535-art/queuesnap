@@ -209,7 +209,7 @@ const LobbyManage = () => {
         sendWhatsAppToken(addPhone.trim(), entry.name, entry.position, lobby.name, tokenUrl);
       }
 
-      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
+      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false); setAddServiceType("");
     } catch (e: any) {
       toast.error(e.message ?? "Failed to add");
     } finally { setAdding(false); }
