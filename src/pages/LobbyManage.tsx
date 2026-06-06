@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,9 +16,10 @@ import { InstallPWA } from "@/components/InstallPWA";
 import { getJoinUrl, getTokenUrl } from "@/lib/urls";
 import {
   adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
-  markCollected, markNotified, sendTokenEmail, serveNext, updateLobby,
+  markCollected, markNoShow, markNotified, sendTokenEmail, serveNext, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
+import { SERVICE_TYPES } from "@/lib/serviceTypes";
 
 const sendWhatsAppToken = (phone: string, name: string, position: number, queueName: string, tokenUrl: string) => {
   const msg = `Hi ${name} 👋\n\nYou've been added to *${queueName}*!\n\n🎫 *Your Token: #${position}*\n\nTrack your position in real time:\n${tokenUrl}\n\n_Powered by QueueSnap_`;
