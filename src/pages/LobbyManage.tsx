@@ -324,6 +324,15 @@ const LobbyManage = () => {
               <Label htmlFor="add-phone">Phone <span className="text-muted-foreground text-xs">(optional — enables WhatsApp)</span></Label>
               <Input id="add-phone" type="tel" placeholder="+91 98765 43210" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-service">Service type</Label>
+              <Select value={addServiceType} onValueChange={setAddServiceType}>
+                <SelectTrigger id="add-service"><SelectValue placeholder="Select a service (optional)" /></SelectTrigger>
+                <SelectContent>
+                  {SERVICE_TYPES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end gap-3">
               <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
                 <Crown className={`h-4 w-4 ${addVip ? "text-amber-500" : "text-muted-foreground"}`} />
