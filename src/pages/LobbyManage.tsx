@@ -41,6 +41,8 @@ const LobbyManage = () => {
   const [addEmail, setAddEmail] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addVip, setAddVip] = useState(false);
+  const [addServiceType, setAddServiceType] = useState<string>("");
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [adding, setAdding] = useState(false);
   const [shareModal, setShareModal] = useState<{ entry: QueueEntry; url: string } | null>(null);
   const [search, setSearch] = useState("");
