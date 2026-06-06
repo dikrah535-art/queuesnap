@@ -467,6 +467,16 @@ const LobbyManage = () => {
                         <Undo2 className="h-4 w-4 sm:mr-1" />
                         <span className="hidden sm:inline">Return</span>
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onNoShow(e.id, e.name)}
+                        title="Mark as no-show"
+                        className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                      >
+                        <UserX className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">No-show</span>
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => onRemove(e.id)} aria-label="Remove">
                         <X className="h-4 w-4" />
                       </Button>
