@@ -577,98 +577,38 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
-      join_lobby:
-        | {
-            Args: { _lobby_id: string; _name: string; _user_id?: string }
-            Returns: {
-              created_at: string
-              device_type: string | null
-              email: string | null
-              id: string
-              is_vip: boolean
-              last_confirmed_at: string | null
-              lobby_id: string
-              name: string
-              notified_email: boolean
-              phone: string | null
-              position: number
-              served_at: string | null
-              service_type: string | null
-              status: Database["public"]["Enums"]["queue_entry_status"]
-              user_id: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "queue_entries"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _device_type?: string
-              _lobby_id: string
-              _name: string
-              _phone?: string
-              _user_id?: string
-            }
-            Returns: {
-              created_at: string
-              device_type: string | null
-              email: string | null
-              id: string
-              is_vip: boolean
-              last_confirmed_at: string | null
-              lobby_id: string
-              name: string
-              notified_email: boolean
-              phone: string | null
-              position: number
-              served_at: string | null
-              service_type: string | null
-              status: Database["public"]["Enums"]["queue_entry_status"]
-              user_id: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "queue_entries"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _device_type?: string
-              _lobby_id: string
-              _name: string
-              _phone?: string
-              _service_type?: string
-              _user_id?: string
-            }
-            Returns: {
-              created_at: string
-              device_type: string | null
-              email: string | null
-              id: string
-              is_vip: boolean
-              last_confirmed_at: string | null
-              lobby_id: string
-              name: string
-              notified_email: boolean
-              phone: string | null
-              position: number
-              served_at: string | null
-              service_type: string | null
-              status: Database["public"]["Enums"]["queue_entry_status"]
-              user_id: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "queue_entries"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      join_lobby: {
+        Args: {
+          _device_type?: string
+          _lobby_id: string
+          _name: string
+          _phone?: string
+          _service_type?: string
+        }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          email: string | null
+          id: string
+          is_vip: boolean
+          last_confirmed_at: string | null
+          lobby_id: string
+          name: string
+          notified_email: boolean
+          phone: string | null
+          position: number
+          served_at: string | null
+          service_type: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       join_queue: { Args: { _id: string; _token: string }; Returns: boolean }
       lookup_device: {
         Args: { _token: string }
