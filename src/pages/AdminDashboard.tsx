@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth";
+import { pingDevice } from "@/lib/deviceRealtime";
 
 interface Device {
   id: string; token_code: string; owner_name: string; owner_id_text: string | null;
@@ -57,10 +58,15 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     load();
-    // Poll every 4s instead of realtime — devices table is no longer in the realtime
-    // publication, to avoid broadcasting customer PII to anonymous subscribers.
-    const iv = setInterval(load, 4000);
-    return () => { clearInterval(iv); };
+    // Realtime subscription for devices + slots (RLS restricts device rows to admins).
+    // Slow interval is a safety-net refetch if a realtime event is missed.
+    const ch = supabase
+      .channel("admin-dashboard-devices")
+      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "slots" }, () => load())
+      .subscribe();
+    const iv = setInterval(load, 30000);
+    return () => { clearInterval(iv); supabase.removeChannel(ch); };
   }, []);
 
   // Generate a short-lived signed URL for the owner photo when handover dialog opens
@@ -86,11 +92,13 @@ const AdminDashboard = () => {
     const next = queue.slice(0, n);
     if (!next.length) { toast.info("Queue is empty"); return; }
     const { error } = await supabase.from("devices").update({ status: "called", called_time: new Date().toISOString() }).in("id", next.map((d) => d.id));
-    if (error) toast.error(error.message); else toast.success(`Called ${next.length}`);
+    if (error) toast.error(error.message);
+    else { toast.success(`Called ${next.length}`); next.forEach((d) => pingDevice(d.id)); }
   };
 
   const ring = async (d: Device) => {
     await supabase.from("devices").update({ ringing: true }).eq("id", d.id);
+    pingDevice(d.id);
     toast.success(`Ringing ${d.token_code}`);
   };
 
@@ -112,6 +120,7 @@ const AdminDashboard = () => {
       return;
     }
     toast.success("Device returned successfully", { duration: 2500 });
+    pingDevice(returnTarget.id);
     setReturnTarget(null);
     load();
   };
@@ -132,6 +141,7 @@ const AdminDashboard = () => {
     }).eq("id", handover.id);
     if (error) { toast.error(error.message); return; }
     // Slot is freed automatically by the sync_slot_occupancy trigger
+    pingDevice(handover.id);
     toast.success(`Handed over to ${handover.owner_name}`);
     setHandover(null);
   };

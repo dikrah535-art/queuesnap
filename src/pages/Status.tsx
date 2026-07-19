@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { playChime, pushNotify, requestNotifyPermission, startAlert, stopAlert } from "@/lib/notify";
+import { useDevicePings } from "@/lib/deviceRealtime";
 
 interface Device {
   id: string; token_code: string; owner_name: string; slot_label: string | null;
@@ -34,6 +35,9 @@ const Status = () => {
   const [queuePos, setQueuePos] = useState<number | null>(null);
   const prevStatus = useRef<string | null>(null);
   const prevRinging = useRef<boolean>(false);
+  const refetchRef = useRef<() => void>(() => {});
+
+  useDevicePings(device?.id ?? null, () => refetchRef.current());
 
   // Fetch + poll via secure RPC (no PII broadcast over realtime)
   useEffect(() => {
@@ -61,9 +65,12 @@ const Status = () => {
       }
     };
 
+    refetchRef.current = fetchOnce;
     fetchOnce();
-    const iv = setInterval(fetchOnce, 4000);
-    return () => { cancelled = true; clearInterval(iv); };
+    // Slow safety-net poll. Realtime pings (useDevicePings) drive instant updates
+    // when admins mutate the row; polling covers dropped events / offline gaps.
+    const iv = setInterval(fetchOnce, 15000);
+    return () => { cancelled = true; clearInterval(iv); refetchRef.current = () => {}; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramId]);
 
