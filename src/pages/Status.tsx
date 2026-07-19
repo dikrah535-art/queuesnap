@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { playChime, pushNotify, requestNotifyPermission, startAlert, stopAlert } from "@/lib/notify";
+import { useDevicePings } from "@/lib/deviceRealtime";
 
 interface Device {
   id: string; token_code: string; owner_name: string; slot_label: string | null;
