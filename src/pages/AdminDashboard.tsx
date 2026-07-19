@@ -92,11 +92,13 @@ const AdminDashboard = () => {
     const next = queue.slice(0, n);
     if (!next.length) { toast.info("Queue is empty"); return; }
     const { error } = await supabase.from("devices").update({ status: "called", called_time: new Date().toISOString() }).in("id", next.map((d) => d.id));
-    if (error) toast.error(error.message); else toast.success(`Called ${next.length}`);
+    if (error) toast.error(error.message);
+    else { toast.success(`Called ${next.length}`); next.forEach((d) => pingDevice(d.id)); }
   };
 
   const ring = async (d: Device) => {
     await supabase.from("devices").update({ ringing: true }).eq("id", d.id);
+    pingDevice(d.id);
     toast.success(`Ringing ${d.token_code}`);
   };
 
