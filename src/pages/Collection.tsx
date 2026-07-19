@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
 import { playChime } from "@/lib/notify";
+import { pingDevice } from "@/lib/deviceRealtime";
 import { formatDistanceToNow } from "date-fns";
 
 interface Device {
