@@ -65,9 +65,12 @@ const Status = () => {
       }
     };
 
+    refetchRef.current = fetchOnce;
     fetchOnce();
-    const iv = setInterval(fetchOnce, 4000);
-    return () => { cancelled = true; clearInterval(iv); };
+    // Slow safety-net poll. Realtime pings (useDevicePings) drive instant updates
+    // when admins mutate the row; polling covers dropped events / offline gaps.
+    const iv = setInterval(fetchOnce, 15000);
+    return () => { cancelled = true; clearInterval(iv); refetchRef.current = () => {}; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramId]);
 
