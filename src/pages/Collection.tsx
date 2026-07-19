@@ -179,6 +179,7 @@ const Collection = () => {
       return;
     }
     toast.success("Device marked as collected", { duration: 2500 });
+    pingDevice(selected.id);
     setConfirmOpen(false);
     // Optimistic update
     setSelected({
