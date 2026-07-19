@@ -57,10 +57,15 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     load();
-    // Poll every 4s instead of realtime — devices table is no longer in the realtime
-    // publication, to avoid broadcasting customer PII to anonymous subscribers.
-    const iv = setInterval(load, 4000);
-    return () => { clearInterval(iv); };
+    // Realtime subscription for devices + slots (RLS restricts device rows to admins).
+    // Slow interval is a safety-net refetch if a realtime event is missed.
+    const ch = supabase
+      .channel("admin-dashboard-devices")
+      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "slots" }, () => load())
+      .subscribe();
+    const iv = setInterval(load, 30000);
+    return () => { clearInterval(iv); supabase.removeChannel(ch); };
   }, []);
 
   // Generate a short-lived signed URL for the owner photo when handover dialog opens
