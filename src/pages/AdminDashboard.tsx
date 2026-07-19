@@ -120,6 +120,7 @@ const AdminDashboard = () => {
       return;
     }
     toast.success("Device returned successfully", { duration: 2500 });
+    pingDevice(returnTarget.id);
     setReturnTarget(null);
     load();
   };
