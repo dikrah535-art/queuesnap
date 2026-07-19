@@ -72,8 +72,13 @@ const Collection = () => {
 
   useEffect(() => {
     loadDevices();
-    const iv = setInterval(loadDevices, 5000);
-    return () => clearInterval(iv);
+    const ch = supabase
+      .channel("collection-devices")
+      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, () => loadDevices())
+      .on("postgres_changes", { event: "*", schema: "public", table: "slots" }, () => loadDevices())
+      .subscribe();
+    const iv = setInterval(loadDevices, 30000);
+    return () => { clearInterval(iv); supabase.removeChannel(ch); };
   }, []);
 
   // Refresh selected device whenever the list updates
