@@ -35,6 +35,9 @@ const Status = () => {
   const [queuePos, setQueuePos] = useState<number | null>(null);
   const prevStatus = useRef<string | null>(null);
   const prevRinging = useRef<boolean>(false);
+  const refetchRef = useRef<() => void>(() => {});
+
+  useDevicePings(device?.id ?? null, () => refetchRef.current());
 
   // Fetch + poll via secure RPC (no PII broadcast over realtime)
   useEffect(() => {
