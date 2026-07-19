@@ -205,11 +205,9 @@ export async function joinLobby(
   name: string,
   extra: { phone?: string; deviceType?: string; serviceType?: string } = {},
 ) {
-  const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase.rpc("join_lobby", {
     _lobby_id: lobbyId,
     _name: name,
-    _user_id: user?.id ?? null,
     _phone: extra.phone ?? null,
     _device_type: extra.deviceType ?? null,
     _service_type: extra.serviceType ?? null,
