@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { QrScanner } from "@/components/QrScanner";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/lib/auth";
+import { pingDevice } from "@/lib/deviceRealtime";
 
 interface Device {
   id: string; token_code: string; owner_name: string; owner_id_text: string | null;
