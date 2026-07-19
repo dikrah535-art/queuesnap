@@ -141,6 +141,7 @@ const AdminDashboard = () => {
     }).eq("id", handover.id);
     if (error) { toast.error(error.message); return; }
     // Slot is freed automatically by the sync_slot_occupancy trigger
+    pingDevice(handover.id);
     toast.success(`Handed over to ${handover.owner_name}`);
     setHandover(null);
   };
