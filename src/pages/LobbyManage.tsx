@@ -16,7 +16,8 @@ import { InstallPWA } from "@/components/InstallPWA";
 import { getJoinUrl, getTokenUrl } from "@/lib/urls";
 import {
   adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
-  markCollected, markNoShow, markNotified, sendTokenEmail, serveNext, updateLobby,
+  markCollected, markNoShow, markNotified, reinstateEntry, sendTokenEmail, serveNext,
+  setRinging, simulateEntries, skipEntry, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 import { SERVICE_TYPES } from "@/lib/serviceTypes";
