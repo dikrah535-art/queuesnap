@@ -36,6 +36,7 @@ const LobbyManage = () => {
   const { wsId, lobbyId } = useParams<{ wsId: string; lobbyId: string }>();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
+  const [skippedEntries, setSkippedEntries] = useState<QueueEntry[]>([]);
   const [todayStats, setTodayStats] = useState<{ total: number; served: number; avgMs: number | null }>({ total: 0, served: 0, avgMs: null });
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
