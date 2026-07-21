@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type WorkspaceRole = "owner" | "admin" | "member";
 export type LobbyStatus = "open" | "closed";
-export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected" | "no_show";
+export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected" | "no_show" | "skipped";
 
 export interface Workspace {
   id: string;
