@@ -182,7 +182,7 @@ export async function fetchQueueEntries(
 ) {
   let q = supabase
     .from("queue_entries")
-    .select("id, lobby_id, user_id, name, device_type, service_type, position, status, created_at, served_at, last_confirmed_at")
+    .select("id, lobby_id, user_id, name, device_type, service_type, position, status, ringing, ringing_at, created_at, served_at, last_confirmed_at")
     .eq("lobby_id", lobbyId);
   if (!opts.includeAll) q = q.in("status", ["waiting", "serving"]);
   const { data, error } = await q.order("position", { ascending: true });
