@@ -56,16 +56,39 @@ const LobbyManage = () => {
     ch.send({ type: "broadcast", event: action, payload: { entryId } });
   };
 
-  const onRing = (entryId: string, name: string) => {
+  const onRing = async (entryId: string, name: string) => {
     setRingingEntryId(entryId);
     sendRingEvent(entryId, "ring");
+    try { await setRinging(entryId, true); } catch { /* non-fatal — broadcast still works */ }
     toast.success(`Ringing ${name}'s device…`);
   };
 
-  const onStopRing = () => {
-    if (ringingEntryId) sendRingEvent(ringingEntryId, "stop");
+  const onStopRing = async () => {
+    const id = ringingEntryId;
+    if (id) sendRingEvent(id, "stop");
     setRingingEntryId(null);
+    if (id) { try { await setRinging(id, false); } catch { /* non-fatal */ } }
     toast.success("Ring stopped");
+  };
+
+  const onSkip = async (id: string, name: string) => {
+    if (!confirm(`Skip ${name}? They'll be moved to the Skipped list and can be reinstated.`)) return;
+    try { await skipEntry(id); toast.success(`${name} skipped`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const onReinstate = async (id: string, name: string) => {
+    try { await reinstateEntry(id); toast.success(`${name} back in queue`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const [simulating, setSimulating] = useState(false);
+  const onSimulate = async () => {
+    if (!lobbyId) return;
+    setSimulating(true);
+    try { const n = await simulateEntries(lobbyId, 10); toast.success(`Added ${n} simulated visitors`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+    finally { setSimulating(false); }
   };
 
   const reload = async () => {
