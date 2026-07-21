@@ -454,8 +454,10 @@ const LobbyManage = () => {
             }
             return (
               <ul className="divide-y divide-border">
-                {filtered.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between py-3 animate-fade-in gap-2">
+                {filtered.map((e) => {
+                  const isRinging = e.ringing || ringingEntryId === e.id;
+                  return (
+                  <li key={e.id} className={`flex items-center justify-between py-3 animate-fade-in gap-2 ${isRinging ? "bg-primary/5 rounded-lg px-2 -mx-2 animate-pulse" : ""}`}>
                     <div className="flex min-w-0 items-center gap-3">
                       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold ${e.status === "serving" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                         {e.position}
@@ -475,8 +477,8 @@ const LobbyManage = () => {
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {e.status === "serving" ? (
                             <span className="inline-flex items-center gap-1 text-primary">
-                              <Bell className={`h-3 w-3 ${ringingEntryId === e.id ? "animate-pulse" : ""}`} />
-                              {ringingEntryId === e.id ? "Ringing…" : "Now serving"}
+                              <Bell className={`h-3 w-3 ${isRinging ? "animate-pulse" : ""}`} />
+                              {isRinging ? "Ringing…" : "Now serving"}
                             </span>
                           ) : (
                             <span>Waiting</span>
@@ -500,7 +502,7 @@ const LobbyManage = () => {
                           <span className="hidden sm:inline">WhatsApp</span>
                         </Button>
                       )}
-                      {ringingEntryId === e.id ? (
+                      {isRinging ? (
                         <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
                           <BellOff className="h-4 w-4 sm:mr-1" />
                           <span className="hidden sm:inline">Stop ring</span>
@@ -511,9 +513,18 @@ const LobbyManage = () => {
                           <span className="hidden sm:inline">Ring</span>
                         </Button>
                       )}
-                      <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Device returned to owner">
+                      <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Complete / device returned to owner">
                         <Undo2 className="h-4 w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Return</span>
+                        <span className="hidden sm:inline">Complete</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onSkip(e.id, e.name)}
+                        title="Skip — move to Skipped list (can reinstate)"
+                      >
+                        <SkipForward className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Skip</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -530,11 +541,34 @@ const LobbyManage = () => {
                       </Button>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             );
           })()}
         </Card>
+
+        {skippedEntries.length > 0 && (
+          <Card className="p-5">
+            <h3 className="mb-3 font-semibold flex items-center gap-2">
+              <SkipForward className="h-4 w-4 text-muted-foreground" /> Skipped ({skippedEntries.length})
+            </h3>
+            <ul className="divide-y divide-border">
+              {skippedEntries.map((e) => (
+                <li key={e.id} className="flex items-center justify-between py-2 gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{e.name}</p>
+                    <p className="text-xs text-muted-foreground">Token #{e.position}{e.service_type ? ` · ${e.service_type}` : ""}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => onReinstate(e.id, e.name)}>
+                    <RotateCcw className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Reinstate</span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
       </main>
 
       <Dialog open={!!shareModal} onOpenChange={(o) => !o && setShareModal(null)}>
