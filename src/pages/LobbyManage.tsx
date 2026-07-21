@@ -393,6 +393,10 @@ const LobbyManage = () => {
               <PlayCircle className="mr-1" /> Serve next
             </Button>
             <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
+            <Button variant="outline" onClick={onSimulate} disabled={simulating} title="Add 10 mock waiting entries">
+              {simulating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
+              Simulate 10
+            </Button>
           </div>
         </Card>
 
