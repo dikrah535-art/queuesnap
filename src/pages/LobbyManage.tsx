@@ -109,6 +109,7 @@ const LobbyManage = () => {
         .filter((d) => d > 0 && d < 1000 * 60 * 60 * 12);
       const avgMs = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
       setTodayStats({ total: todays.length, served: served.length, avgMs });
+      setSkippedEntries(allEs.filter((e) => e.status === "skipped"));
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
   };
