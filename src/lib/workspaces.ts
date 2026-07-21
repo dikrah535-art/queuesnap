@@ -41,6 +41,8 @@ export interface QueueEntry {
   service_type?: string | null;
   position: number;
   status: QueueEntryStatus;
+  ringing?: boolean;
+  ringing_at?: string | null;
   created_at: string;
   served_at: string | null;
   last_confirmed_at?: string | null;
