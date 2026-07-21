@@ -175,6 +175,14 @@ const JoinLobby = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyId, myEntry?.id]);
 
+  // Persistent ringing state (DB): sync sound to myEntry.ringing so page refreshes
+  // during a call still play the tone, and admin's Stop ring silences it everywhere.
+  useEffect(() => {
+    if (myEntry?.ringing && !ringing) startRing();
+    if (!myEntry?.ringing && ringing) stopRing();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myEntry?.ringing]);
+
   const position = useMemo(() => {
     if (!myEntry) return 0;
     if (myEntry.status === "serving") return 0;
