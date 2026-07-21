@@ -392,3 +392,27 @@ export async function fetchEstimatedWaitSeconds(lobbyId: string): Promise<number
   return (data as unknown as number) ?? 180;
 }
 
+export async function setRinging(entryId: string, on: boolean) {
+  const { data, error } = await supabase.rpc("set_ringing" as never, { _entry_id: entryId, _on: on } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function skipEntry(entryId: string) {
+  const { data, error } = await supabase.rpc("skip_entry" as never, { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function reinstateEntry(entryId: string) {
+  const { data, error } = await supabase.rpc("reinstate_entry" as never, { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function simulateEntries(lobbyId: string, count = 10) {
+  const { data, error } = await supabase.rpc("simulate_entries" as never, { _lobby_id: lobbyId, _count: count } as never);
+  if (error) throw error;
+  return (data as unknown as number) ?? 0;
+}
+
