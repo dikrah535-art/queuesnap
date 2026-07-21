@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, Smartphone, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, RotateCcw, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,8 @@ import { InstallPWA } from "@/components/InstallPWA";
 import { getJoinUrl, getTokenUrl } from "@/lib/urls";
 import {
   adminAddEntry, cancelEntry, clearQueue, deleteLobby, fetchLobby, fetchLobbyEntriesAdmin,
-  markCollected, markNoShow, markNotified, sendTokenEmail, serveNext, updateLobby,
+  markCollected, markNoShow, markNotified, reinstateEntry, sendTokenEmail, serveNext,
+  setRinging, simulateEntries, skipEntry, updateLobby,
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 import { SERVICE_TYPES } from "@/lib/serviceTypes";
@@ -35,6 +36,7 @@ const LobbyManage = () => {
   const { wsId, lobbyId } = useParams<{ wsId: string; lobbyId: string }>();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
+  const [skippedEntries, setSkippedEntries] = useState<QueueEntry[]>([]);
   const [todayStats, setTodayStats] = useState<{ total: number; served: number; avgMs: number | null }>({ total: 0, served: 0, avgMs: null });
   const [loading, setLoading] = useState(true);
   const [addName, setAddName] = useState("");
@@ -55,16 +57,39 @@ const LobbyManage = () => {
     ch.send({ type: "broadcast", event: action, payload: { entryId } });
   };
 
-  const onRing = (entryId: string, name: string) => {
+  const onRing = async (entryId: string, name: string) => {
     setRingingEntryId(entryId);
     sendRingEvent(entryId, "ring");
+    try { await setRinging(entryId, true); } catch { /* non-fatal — broadcast still works */ }
     toast.success(`Ringing ${name}'s device…`);
   };
 
-  const onStopRing = () => {
-    if (ringingEntryId) sendRingEvent(ringingEntryId, "stop");
+  const onStopRing = async () => {
+    const id = ringingEntryId;
+    if (id) sendRingEvent(id, "stop");
     setRingingEntryId(null);
+    if (id) { try { await setRinging(id, false); } catch { /* non-fatal */ } }
     toast.success("Ring stopped");
+  };
+
+  const onSkip = async (id: string, name: string) => {
+    if (!confirm(`Skip ${name}? They'll be moved to the Skipped list and can be reinstated.`)) return;
+    try { await skipEntry(id); toast.success(`${name} skipped`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const onReinstate = async (id: string, name: string) => {
+    try { await reinstateEntry(id); toast.success(`${name} back in queue`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const [simulating, setSimulating] = useState(false);
+  const onSimulate = async () => {
+    if (!lobbyId) return;
+    setSimulating(true);
+    try { const n = await simulateEntries(lobbyId, 10); toast.success(`Added ${n} simulated visitors`); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+    finally { setSimulating(false); }
   };
 
   const reload = async () => {
@@ -84,6 +109,7 @@ const LobbyManage = () => {
         .filter((d) => d > 0 && d < 1000 * 60 * 60 * 12);
       const avgMs = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
       setTodayStats({ total: todays.length, served: served.length, avgMs });
+      setSkippedEntries(allEs.filter((e) => e.status === "skipped"));
     } catch (e: any) { toast.error(e.message ?? "Failed to load"); }
     finally { setLoading(false); }
   };
@@ -156,6 +182,24 @@ const LobbyManage = () => {
         if (next.phone) {
           sendWhatsAppCall(next.phone, next.name, lobby.name);
         }
+        // "2 spots away" heads-up: notify the person now 3rd from serving.
+        try {
+          const upcoming = entries
+            .filter((e) => e.status === "waiting" && e.id !== next.id)
+            .sort((a, b) => a.position - b.position);
+          const twoAway = upcoming[1]; // 0 = next up, 1 = two away
+          if (twoAway?.email && !twoAway.notified_email) {
+            await sendTokenEmail({
+              email: twoAway.email,
+              name: twoAway.name,
+              tokenNumber: twoAway.position,
+              queueName: lobby.name,
+              tokenUrl: getTokenUrl(lobbyId, twoAway.id),
+              type: "token",
+            });
+            await markNotified(twoAway.id);
+          }
+        } catch { /* non-fatal */ }
       }
     } catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
@@ -349,6 +393,10 @@ const LobbyManage = () => {
               <PlayCircle className="mr-1" /> Serve next
             </Button>
             <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
+            <Button variant="outline" onClick={onSimulate} disabled={simulating} title="Add 10 mock waiting entries">
+              {simulating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
+              Simulate 10
+            </Button>
           </div>
         </Card>
 
@@ -406,8 +454,10 @@ const LobbyManage = () => {
             }
             return (
               <ul className="divide-y divide-border">
-                {filtered.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between py-3 animate-fade-in gap-2">
+                {filtered.map((e) => {
+                  const isRinging = e.ringing || ringingEntryId === e.id;
+                  return (
+                  <li key={e.id} className={`flex items-center justify-between py-3 animate-fade-in gap-2 ${isRinging ? "bg-primary/5 rounded-lg px-2 -mx-2 animate-pulse" : ""}`}>
                     <div className="flex min-w-0 items-center gap-3">
                       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold ${e.status === "serving" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                         {e.position}
@@ -427,8 +477,8 @@ const LobbyManage = () => {
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {e.status === "serving" ? (
                             <span className="inline-flex items-center gap-1 text-primary">
-                              <Bell className={`h-3 w-3 ${ringingEntryId === e.id ? "animate-pulse" : ""}`} />
-                              {ringingEntryId === e.id ? "Ringing…" : "Now serving"}
+                              <Bell className={`h-3 w-3 ${isRinging ? "animate-pulse" : ""}`} />
+                              {isRinging ? "Ringing…" : "Now serving"}
                             </span>
                           ) : (
                             <span>Waiting</span>
@@ -452,7 +502,7 @@ const LobbyManage = () => {
                           <span className="hidden sm:inline">WhatsApp</span>
                         </Button>
                       )}
-                      {ringingEntryId === e.id ? (
+                      {isRinging ? (
                         <Button variant="destructive" size="sm" onClick={onStopRing} title="Stop ringing">
                           <BellOff className="h-4 w-4 sm:mr-1" />
                           <span className="hidden sm:inline">Stop ring</span>
@@ -463,9 +513,18 @@ const LobbyManage = () => {
                           <span className="hidden sm:inline">Ring</span>
                         </Button>
                       )}
-                      <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Device returned to owner">
+                      <Button variant="default" size="sm" onClick={() => onCollected(e.id)} title="Complete / device returned to owner">
                         <Undo2 className="h-4 w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Return</span>
+                        <span className="hidden sm:inline">Complete</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onSkip(e.id, e.name)}
+                        title="Skip — move to Skipped list (can reinstate)"
+                      >
+                        <SkipForward className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Skip</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -482,11 +541,34 @@ const LobbyManage = () => {
                       </Button>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             );
           })()}
         </Card>
+
+        {skippedEntries.length > 0 && (
+          <Card className="p-5">
+            <h3 className="mb-3 font-semibold flex items-center gap-2">
+              <SkipForward className="h-4 w-4 text-muted-foreground" /> Skipped ({skippedEntries.length})
+            </h3>
+            <ul className="divide-y divide-border">
+              {skippedEntries.map((e) => (
+                <li key={e.id} className="flex items-center justify-between py-2 gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{e.name}</p>
+                    <p className="text-xs text-muted-foreground">Token #{e.position}{e.service_type ? ` · ${e.service_type}` : ""}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => onReinstate(e.id, e.name)}>
+                    <RotateCcw className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Reinstate</span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
       </main>
 
       <Dialog open={!!shareModal} onOpenChange={(o) => !o && setShareModal(null)}>

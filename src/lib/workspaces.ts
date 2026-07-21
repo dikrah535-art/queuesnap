@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type WorkspaceRole = "owner" | "admin" | "member";
 export type LobbyStatus = "open" | "closed";
-export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected" | "no_show";
+export type QueueEntryStatus = "waiting" | "serving" | "served" | "cancelled" | "collected" | "no_show" | "skipped";
 
 export interface Workspace {
   id: string;
@@ -41,6 +41,8 @@ export interface QueueEntry {
   service_type?: string | null;
   position: number;
   status: QueueEntryStatus;
+  ringing?: boolean;
+  ringing_at?: string | null;
   created_at: string;
   served_at: string | null;
   last_confirmed_at?: string | null;
@@ -180,7 +182,7 @@ export async function fetchQueueEntries(
 ) {
   let q = supabase
     .from("queue_entries")
-    .select("id, lobby_id, user_id, name, device_type, service_type, position, status, created_at, served_at, last_confirmed_at")
+    .select("id, lobby_id, user_id, name, device_type, service_type, position, status, ringing, ringing_at, created_at, served_at, last_confirmed_at")
     .eq("lobby_id", lobbyId);
   if (!opts.includeAll) q = q.in("status", ["waiting", "serving"]);
   const { data, error } = await q.order("position", { ascending: true });
@@ -388,5 +390,29 @@ export async function fetchEstimatedWaitSeconds(lobbyId: string): Promise<number
   const { data, error } = await supabase.rpc("estimated_wait_seconds" as never, { _lobby_id: lobbyId } as never);
   if (error) return 180;
   return (data as unknown as number) ?? 180;
+}
+
+export async function setRinging(entryId: string, on: boolean) {
+  const { data, error } = await supabase.rpc("set_ringing" as never, { _entry_id: entryId, _on: on } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function skipEntry(entryId: string) {
+  const { data, error } = await supabase.rpc("skip_entry" as never, { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function reinstateEntry(entryId: string) {
+  const { data, error } = await supabase.rpc("reinstate_entry" as never, { _entry_id: entryId } as never);
+  if (error) throw error;
+  return data as unknown as QueueEntry;
+}
+
+export async function simulateEntries(lobbyId: string, count = 10) {
+  const { data, error } = await supabase.rpc("simulate_entries" as never, { _lobby_id: lobbyId, _count: count } as never);
+  if (error) throw error;
+  return (data as unknown as number) ?? 0;
 }
 

@@ -193,6 +193,8 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -210,6 +212,8 @@ export type Database = {
           notified_email?: boolean
           phone?: string | null
           position: number
+          ringing?: boolean
+          ringing_at?: string | null
           served_at?: string | null
           service_type?: string | null
           status?: Database["public"]["Enums"]["queue_entry_status"]
@@ -227,6 +231,8 @@ export type Database = {
           notified_email?: boolean
           phone?: string | null
           position?: number
+          ringing?: boolean
+          ringing_at?: string | null
           served_at?: string | null
           service_type?: string | null
           status?: Database["public"]["Enums"]["queue_entry_status"]
@@ -445,6 +451,8 @@ export type Database = {
               notified_email: boolean
               phone: string | null
               position: number
+              ringing: boolean
+              ringing_at: string | null
               served_at: string | null
               service_type: string | null
               status: Database["public"]["Enums"]["queue_entry_status"]
@@ -479,6 +487,8 @@ export type Database = {
               notified_email: boolean
               phone: string | null
               position: number
+              ringing: boolean
+              ringing_at: string | null
               served_at: string | null
               service_type: string | null
               status: Database["public"]["Enums"]["queue_entry_status"]
@@ -513,6 +523,8 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -541,6 +553,8 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -597,6 +611,8 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -636,6 +652,8 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -662,6 +680,8 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -675,6 +695,34 @@ export type Database = {
         }
       }
       queue_position: { Args: { _id: string; _token: string }; Returns: number }
+      reinstate_entry: {
+        Args: { _entry_id: string }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          email: string | null
+          id: string
+          is_vip: boolean
+          last_confirmed_at: string | null
+          lobby_id: string
+          name: string
+          notified_email: boolean
+          phone: string | null
+          position: number
+          ringing: boolean
+          ringing_at: string | null
+          served_at: string | null
+          service_type: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_lobby: { Args: { _key: string }; Returns: string }
       serve_next: {
         Args: { _lobby_id: string }
@@ -690,6 +738,68 @@ export type Database = {
           notified_email: boolean
           phone: string | null
           position: number
+          ringing: boolean
+          ringing_at: string | null
+          served_at: string | null
+          service_type: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_ringing: {
+        Args: { _entry_id: string; _on: boolean }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          email: string | null
+          id: string
+          is_vip: boolean
+          last_confirmed_at: string | null
+          lobby_id: string
+          name: string
+          notified_email: boolean
+          phone: string | null
+          position: number
+          ringing: boolean
+          ringing_at: string | null
+          served_at: string | null
+          service_type: string | null
+          status: Database["public"]["Enums"]["queue_entry_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "queue_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      simulate_entries: {
+        Args: { _count?: number; _lobby_id: string }
+        Returns: number
+      }
+      skip_entry: {
+        Args: { _entry_id: string }
+        Returns: {
+          created_at: string
+          device_type: string | null
+          email: string | null
+          id: string
+          is_vip: boolean
+          last_confirmed_at: string | null
+          lobby_id: string
+          name: string
+          notified_email: boolean
+          phone: string | null
+          position: number
+          ringing: boolean
+          ringing_at: string | null
           served_at: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["queue_entry_status"]
@@ -714,6 +824,7 @@ export type Database = {
         | "cancelled"
         | "collected"
         | "no_show"
+        | "skipped"
       workspace_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
@@ -852,6 +963,7 @@ export const Constants = {
         "cancelled",
         "collected",
         "no_show",
+        "skipped",
       ],
       workspace_role: ["owner", "admin", "member"],
     },
