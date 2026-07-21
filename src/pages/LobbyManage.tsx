@@ -180,6 +180,24 @@ const LobbyManage = () => {
         if (next.phone) {
           sendWhatsAppCall(next.phone, next.name, lobby.name);
         }
+        // "2 spots away" heads-up: notify the person now 3rd from serving.
+        try {
+          const upcoming = entries
+            .filter((e) => e.status === "waiting" && e.id !== next.id)
+            .sort((a, b) => a.position - b.position);
+          const twoAway = upcoming[1]; // 0 = next up, 1 = two away
+          if (twoAway?.email && !twoAway.notified_email) {
+            await sendTokenEmail({
+              email: twoAway.email,
+              name: twoAway.name,
+              tokenNumber: twoAway.position,
+              queueName: lobby.name,
+              tokenUrl: getTokenUrl(lobbyId, twoAway.id),
+              type: "token",
+            });
+            await markNotified(twoAway.id);
+          }
+        } catch { /* non-fatal */ }
       }
     } catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
