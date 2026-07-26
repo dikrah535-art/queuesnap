@@ -533,11 +533,22 @@ const LobbyManage = () => {
               : serviceFilter === "__none"
                 ? entries.filter((e) => !e.service_type)
                 : entries.filter((e) => e.service_type === serviceFilter);
+            const byCounter = counterFilter === "all"
+              ? byService
+              : counterFilter === "mine"
+                ? byService.filter((e) => e.counter_id === activeCounter)
+                : counterFilter === "__unassigned"
+                  ? byService.filter((e) => !e.counter_id)
+                  : byService.filter((e) => e.counter_id === counterFilter);
             const filtered = q
-              ? byService.filter((e) =>
-                  e.name.toLowerCase().includes(q) || (e.phone ?? "").toLowerCase().includes(q),
+              ? byCounter.filter((e) =>
+                  e.name.toLowerCase().includes(q)
+                  || (e.phone ?? "").toLowerCase().includes(q)
+                  || (e.roll_number ?? "").toLowerCase().includes(q)
+                  || (e.device_model ?? "").toLowerCase().includes(q),
                 )
-              : byService;
+              : byCounter;
+
             if (entries.length === 0) {
               return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
             }
