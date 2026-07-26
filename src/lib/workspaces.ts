@@ -243,11 +243,15 @@ export async function confirmPresence(entryId: string) {
   return data as unknown as QueueEntry;
 }
 
-export async function serveNext(lobbyId: string) {
-  const { data, error } = await supabase.rpc("serve_next", { _lobby_id: lobbyId });
+export async function serveNext(lobbyId: string, counterId?: string | null) {
+  const { data, error } = await supabase.rpc("serve_next", {
+    _lobby_id: lobbyId,
+    _counter_id: counterId ?? null,
+  } as never);
   if (error) throw error;
   return data as unknown as QueueEntry | null;
 }
+
 
 export async function clearQueue(lobbyId: string) {
   const { data, error } = await supabase.rpc("clear_queue", { _lobby_id: lobbyId });
