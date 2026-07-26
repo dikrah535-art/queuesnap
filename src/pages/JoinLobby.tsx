@@ -35,7 +35,10 @@ const JoinLobby = () => {
   const [phone, setPhone] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [serviceType, setServiceType] = useState<string>("");
+  const [rollNumber, setRollNumber] = useState("");
+  const [deviceModel, setDeviceModel] = useState("");
   const [needsConfirm, setNeedsConfirm] = useState(false);
+
   const [joining, setJoining] = useState(false);
   const [myEntry, setMyEntry] = useState<QueueEntry | null>(null);
   const [avgServiceSec, setAvgServiceSec] = useState<number>(180);
