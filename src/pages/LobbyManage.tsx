@@ -739,6 +739,46 @@ const LobbyManage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={countersOpen} onOpenChange={setCountersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage counters</DialogTitle>
+            <DialogDescription>
+              Create service desks for this workspace. Staff pick "My counter" so that entries they serve get tagged, and can filter the queue to only their counter.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. Counter 1 – Front Desk"
+                value={newCounterName}
+                onChange={(e) => setNewCounterName(e.target.value)}
+                maxLength={60}
+                onKeyDown={(e) => { if (e.key === "Enter") onAddCounter(); }}
+              />
+              <Button onClick={onAddCounter} disabled={!newCounterName.trim()}>
+                <Plus className="mr-1 h-4 w-4" /> Add
+              </Button>
+            </div>
+            {counters.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">No counters yet.</p>
+            ) : (
+              <ul className="divide-y divide-border rounded-md border border-border">
+                {counters.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between px-3 py-2">
+                    <span className="text-sm font-medium">{c.name}</span>
+                    <Button variant="ghost" size="icon" onClick={() => onDeleteCounter(c.id)} title="Delete">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
