@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, RotateCcw, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, IdCard, Laptop, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Plus, Power, RotateCcw, Settings2, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,11 @@ import {
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 import { SERVICE_TYPES } from "@/lib/serviceTypes";
+import {
+  createCounter, deleteCounter, fetchCounters, getActiveCounter, setActiveCounter,
+  type Counter,
+} from "@/lib/counters";
+
 
 const sendWhatsAppToken = (phone: string, name: string, position: number, queueName: string, tokenUrl: string) => {
   const msg = `Hi ${name} 👋\n\nYou've been added to *${queueName}*!\n\n🎫 *Your Token: #${position}*\n\nTrack your position in real time:\n${tokenUrl}\n\n_Powered by QueueSnap_`;
@@ -44,12 +49,20 @@ const LobbyManage = () => {
   const [addPhone, setAddPhone] = useState("");
   const [addVip, setAddVip] = useState(false);
   const [addServiceType, setAddServiceType] = useState<string>("");
+  const [addRollNumber, setAddRollNumber] = useState("");
+  const [addDeviceModel, setAddDeviceModel] = useState("");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [counterFilter, setCounterFilter] = useState<string>("all"); // "all" | "mine"
   const [adding, setAdding] = useState(false);
   const [shareModal, setShareModal] = useState<{ entry: QueueEntry; url: string } | null>(null);
   const [search, setSearch] = useState("");
   const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
   const ringChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [counters, setCounters] = useState<Counter[]>([]);
+  const [activeCounter, setActiveCounterState] = useState<string | null>(null);
+  const [countersOpen, setCountersOpen] = useState(false);
+  const [newCounterName, setNewCounterName] = useState("");
+
 
   const sendRingEvent = (entryId: string, action: "ring" | "stop") => {
     const ch = ringChannelRef.current;
@@ -116,6 +129,46 @@ const LobbyManage = () => {
 
   useEffect(() => { reload(); }, [lobbyId]);
 
+  // Load counters for this workspace, restore active-counter selection
+  useEffect(() => {
+    if (!wsId) return;
+    fetchCounters(wsId).then((cs) => {
+      setCounters(cs);
+      const saved = getActiveCounter(wsId);
+      if (saved && cs.some((c) => c.id === saved)) setActiveCounterState(saved);
+    }).catch(() => {});
+  }, [wsId]);
+
+  const reloadCounters = async () => {
+    if (!wsId) return;
+    try { setCounters(await fetchCounters(wsId)); } catch {}
+  };
+
+  const onSelectCounter = (id: string) => {
+    if (!wsId) return;
+    const val = id === "__none" ? null : id;
+    setActiveCounterState(val);
+    setActiveCounter(wsId, val);
+  };
+
+  const onAddCounter = async () => {
+    if (!wsId || !newCounterName.trim()) return;
+    try { await createCounter(wsId, newCounterName); setNewCounterName(""); await reloadCounters(); toast.success("Counter added"); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const onDeleteCounter = async (id: string) => {
+    if (!confirm("Delete this counter? Served entries stay in history but lose their counter tag.")) return;
+    try {
+      await deleteCounter(id);
+      if (activeCounter === id) onSelectCounter("__none");
+      await reloadCounters();
+      toast.success("Counter deleted");
+    } catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+
+
   useEffect(() => {
     if (!lobbyId) return;
     const ch = supabase
@@ -160,7 +213,7 @@ const LobbyManage = () => {
   const onServeNext = async () => {
     if (!lobbyId || !lobby) return;
     try {
-      const next = await serveNext(lobbyId);
+      const next = await serveNext(lobbyId, activeCounter);
       toast.success("Next person called");
       if (next) {
         const tokenUrl = getTokenUrl(lobbyId, next.id);
@@ -225,6 +278,8 @@ const LobbyManage = () => {
         phone: addPhone.trim() || undefined,
         isVip: addVip,
         serviceType: addServiceType || undefined,
+        rollNumber: addRollNumber.trim() || undefined,
+        deviceModel: addDeviceModel.trim() || undefined,
       });
       const tokenUrl = getTokenUrl(lobbyId, entry.id);
       toast.success(`Token #${entry.position} assigned to ${entry.name}`);
@@ -253,7 +308,9 @@ const LobbyManage = () => {
         sendWhatsAppToken(addPhone.trim(), entry.name, entry.position, lobby.name, tokenUrl);
       }
 
-      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false); setAddServiceType("");
+      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
+      setAddServiceType(""); setAddRollNumber(""); setAddDeviceModel("");
+
     } catch (e: any) {
       toast.error(e.message ?? "Failed to add");
     } finally { setAdding(false); }
@@ -307,8 +364,24 @@ const LobbyManage = () => {
               <p className="text-xs text-muted-foreground">Lobby management</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-card px-1.5 py-1">
+              <IdCard className="ml-1 h-4 w-4 text-muted-foreground" />
+              <Select value={activeCounter ?? "__none"} onValueChange={onSelectCounter}>
+                <SelectTrigger className="h-8 min-w-[140px] border-0 bg-transparent px-2 text-sm shadow-none focus:ring-0">
+                  <SelectValue placeholder="My counter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">No counter</SelectItem>
+                  {counters.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCountersOpen(true)} title="Manage counters">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            </div>
             <InstallPWA />
+
             <Button asChild variant="outline" size="sm">
               <Link to={`/display/${lobbyId}`} target="_blank">
                 <Monitor className="mr-1 h-4 w-4" /> Display
@@ -369,7 +442,16 @@ const LobbyManage = () => {
               <Input id="add-phone" type="tel" placeholder="+91 98765 43210" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="add-roll">Roll / ID <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-roll" placeholder="e.g. CS-2021-045" value={addRollNumber} onChange={(e) => setAddRollNumber(e.target.value)} maxLength={40} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-model">Device model / description <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-model" placeholder="e.g. MacBook Pro 14, iPhone 13" value={addDeviceModel} onChange={(e) => setAddDeviceModel(e.target.value)} maxLength={80} />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="add-service">Service type</Label>
+
               <Select value={addServiceType} onValueChange={setAddServiceType}>
                 <SelectTrigger id="add-service"><SelectValue placeholder="Select a service (optional)" /></SelectTrigger>
                 <SelectContent>
@@ -411,13 +493,29 @@ const LobbyManage = () => {
         <Card className="p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-semibold">Queue</h3>
-            <Input
-              placeholder="Search by name or phone…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-xs"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={counterFilter} onValueChange={setCounterFilter}>
+                <SelectTrigger className="h-9 w-[190px]">
+                  <SelectValue placeholder="Master queue" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Master queue (all)</SelectItem>
+                  <SelectItem value="mine" disabled={!activeCounter}>
+                    {activeCounter ? "Only my counter" : "Only my counter (pick one)"}
+                  </SelectItem>
+                  <SelectItem value="__unassigned">Unassigned</SelectItem>
+                  {counters.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Search name, phone, roll…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
           </div>
+
           <Tabs value={serviceFilter} onValueChange={setServiceFilter} className="mb-4">
             <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="all">All ({entries.length})</TabsTrigger>
@@ -435,11 +533,22 @@ const LobbyManage = () => {
               : serviceFilter === "__none"
                 ? entries.filter((e) => !e.service_type)
                 : entries.filter((e) => e.service_type === serviceFilter);
+            const byCounter = counterFilter === "all"
+              ? byService
+              : counterFilter === "mine"
+                ? byService.filter((e) => e.counter_id === activeCounter)
+                : counterFilter === "__unassigned"
+                  ? byService.filter((e) => !e.counter_id)
+                  : byService.filter((e) => e.counter_id === counterFilter);
             const filtered = q
-              ? byService.filter((e) =>
-                  e.name.toLowerCase().includes(q) || (e.phone ?? "").toLowerCase().includes(q),
+              ? byCounter.filter((e) =>
+                  e.name.toLowerCase().includes(q)
+                  || (e.phone ?? "").toLowerCase().includes(q)
+                  || (e.roll_number ?? "").toLowerCase().includes(q)
+                  || (e.device_model ?? "").toLowerCase().includes(q),
                 )
-              : byService;
+              : byCounter;
+
             if (entries.length === 0) {
               return <p className="py-12 text-center text-sm text-muted-foreground">No one in queue yet — share the QR code! 📱</p>;
             }
@@ -484,8 +593,23 @@ const LobbyManage = () => {
                             <span>Waiting</span>
                           )}
                           {e.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {e.phone}</span>}
+                          {e.roll_number && (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+                              <IdCard className="h-3 w-3" /> {e.roll_number}
+                            </span>
+                          )}
+                          {e.device_model && (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 text-[11px] text-foreground">
+                              <Laptop className="h-3 w-3" /> {e.device_model}
+                            </span>
+                          )}
                           {e.device_type && <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3" /> {e.device_type}</span>}
                           {e.service_type && <span className="inline-flex items-center rounded-full bg-accent/40 px-2 py-0.5 text-[10px] font-medium">{e.service_type}</span>}
+                          {e.counter_id && (() => {
+                            const c = counters.find((x) => x.id === e.counter_id);
+                            return c ? <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">🏷 {c.name}</span> : null;
+                          })()}
+
                         </div>
                       </div>
                     </div>
@@ -615,6 +739,46 @@ const LobbyManage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={countersOpen} onOpenChange={setCountersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage counters</DialogTitle>
+            <DialogDescription>
+              Create service desks for this workspace. Staff pick "My counter" so that entries they serve get tagged, and can filter the queue to only their counter.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. Counter 1 – Front Desk"
+                value={newCounterName}
+                onChange={(e) => setNewCounterName(e.target.value)}
+                maxLength={60}
+                onKeyDown={(e) => { if (e.key === "Enter") onAddCounter(); }}
+              />
+              <Button onClick={onAddCounter} disabled={!newCounterName.trim()}>
+                <Plus className="mr-1 h-4 w-4" /> Add
+              </Button>
+            </div>
+            {counters.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">No counters yet.</p>
+            ) : (
+              <ul className="divide-y divide-border rounded-md border border-border">
+                {counters.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between px-3 py-2">
+                    <span className="text-sm font-medium">{c.name}</span>
+                    <Button variant="ghost" size="icon" onClick={() => onDeleteCounter(c.id)} title="Delete">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

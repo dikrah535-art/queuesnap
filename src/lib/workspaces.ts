@@ -39,6 +39,9 @@ export interface QueueEntry {
   notified_email?: boolean;
   device_type: string | null;
   service_type?: string | null;
+  roll_number?: string | null;
+  device_model?: string | null;
+  counter_id?: string | null;
   position: number;
   status: QueueEntryStatus;
   ringing?: boolean;
@@ -47,6 +50,7 @@ export interface QueueEntry {
   served_at: string | null;
   last_confirmed_at?: string | null;
 }
+
 
 export interface WorkspaceMember {
   id: string;
@@ -205,7 +209,7 @@ export async function fetchLobbyEntriesAdmin(
 export async function joinLobby(
   lobbyId: string,
   name: string,
-  extra: { phone?: string; deviceType?: string; serviceType?: string } = {},
+  extra: { phone?: string; deviceType?: string; serviceType?: string; rollNumber?: string; deviceModel?: string } = {},
 ) {
   const { data, error } = await supabase.rpc("join_lobby", {
     _lobby_id: lobbyId,
@@ -213,10 +217,13 @@ export async function joinLobby(
     _phone: extra.phone ?? null,
     _device_type: extra.deviceType ?? null,
     _service_type: extra.serviceType ?? null,
+    _roll_number: extra.rollNumber ?? null,
+    _device_model: extra.deviceModel ?? null,
   } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
 }
+
 
 export async function markCollected(entryId: string) {
   const { data, error } = await supabase.rpc("mark_collected", { _entry_id: entryId } as never);
@@ -236,11 +243,15 @@ export async function confirmPresence(entryId: string) {
   return data as unknown as QueueEntry;
 }
 
-export async function serveNext(lobbyId: string) {
-  const { data, error } = await supabase.rpc("serve_next", { _lobby_id: lobbyId });
+export async function serveNext(lobbyId: string, counterId?: string | null) {
+  const { data, error } = await supabase.rpc("serve_next", {
+    _lobby_id: lobbyId,
+    _counter_id: counterId ?? null,
+  } as never);
   if (error) throw error;
   return data as unknown as QueueEntry | null;
 }
+
 
 export async function clearQueue(lobbyId: string) {
   const { data, error } = await supabase.rpc("clear_queue", { _lobby_id: lobbyId });
@@ -359,7 +370,8 @@ export async function fetchDemoVisitors(): Promise<DemoVisitor[]> {
 }
 
 export async function adminAddEntry(input: {
-  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string; isVip?: boolean; serviceType?: string;
+  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string;
+  isVip?: boolean; serviceType?: string; rollNumber?: string; deviceModel?: string;
 }) {
   const { data, error } = await supabase.rpc("admin_add_entry", {
     _lobby_id: input.lobbyId,
@@ -369,10 +381,13 @@ export async function adminAddEntry(input: {
     _device_type: input.deviceType ?? null,
     _is_vip: input.isVip ?? false,
     _service_type: input.serviceType ?? null,
+    _roll_number: input.rollNumber ?? null,
+    _device_model: input.deviceModel ?? null,
   } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
 }
+
 
 export async function sendTokenEmail(input: {
   email: string; name: string; tokenNumber: number; queueName: string; tokenUrl: string;
