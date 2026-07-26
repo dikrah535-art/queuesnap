@@ -129,6 +129,46 @@ const LobbyManage = () => {
 
   useEffect(() => { reload(); }, [lobbyId]);
 
+  // Load counters for this workspace, restore active-counter selection
+  useEffect(() => {
+    if (!wsId) return;
+    fetchCounters(wsId).then((cs) => {
+      setCounters(cs);
+      const saved = getActiveCounter(wsId);
+      if (saved && cs.some((c) => c.id === saved)) setActiveCounterState(saved);
+    }).catch(() => {});
+  }, [wsId]);
+
+  const reloadCounters = async () => {
+    if (!wsId) return;
+    try { setCounters(await fetchCounters(wsId)); } catch {}
+  };
+
+  const onSelectCounter = (id: string) => {
+    if (!wsId) return;
+    const val = id === "__none" ? null : id;
+    setActiveCounterState(val);
+    setActiveCounter(wsId, val);
+  };
+
+  const onAddCounter = async () => {
+    if (!wsId || !newCounterName.trim()) return;
+    try { await createCounter(wsId, newCounterName); setNewCounterName(""); await reloadCounters(); toast.success("Counter added"); }
+    catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const onDeleteCounter = async (id: string) => {
+    if (!confirm("Delete this counter? Served entries stay in history but lose their counter tag.")) return;
+    try {
+      await deleteCounter(id);
+      if (activeCounter === id) onSelectCounter("__none");
+      await reloadCounters();
+      toast.success("Counter deleted");
+    } catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+
+
   useEffect(() => {
     if (!lobbyId) return;
     const ch = supabase
