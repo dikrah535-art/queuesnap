@@ -278,6 +278,8 @@ const LobbyManage = () => {
         phone: addPhone.trim() || undefined,
         isVip: addVip,
         serviceType: addServiceType || undefined,
+        rollNumber: addRollNumber.trim() || undefined,
+        deviceModel: addDeviceModel.trim() || undefined,
       });
       const tokenUrl = getTokenUrl(lobbyId, entry.id);
       toast.success(`Token #${entry.position} assigned to ${entry.name}`);
@@ -306,7 +308,9 @@ const LobbyManage = () => {
         sendWhatsAppToken(addPhone.trim(), entry.name, entry.position, lobby.name, tokenUrl);
       }
 
-      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false); setAddServiceType("");
+      setAddName(""); setAddEmail(""); setAddPhone(""); setAddVip(false);
+      setAddServiceType(""); setAddRollNumber(""); setAddDeviceModel("");
+
     } catch (e: any) {
       toast.error(e.message ?? "Failed to add");
     } finally { setAdding(false); }
