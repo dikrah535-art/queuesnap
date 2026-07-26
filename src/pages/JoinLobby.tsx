@@ -203,10 +203,13 @@ const JoinLobby = () => {
         phone: phone.trim() || undefined,
         deviceType: deviceType.trim() || undefined,
         serviceType: serviceType || undefined,
+        rollNumber: rollNumber.trim() || undefined,
+        deviceModel: deviceModel.trim() || undefined,
       });
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) rememberAnonEntry({ lobbyId, entryId: entry.id, name: entry.name });
       setMyEntry(entry);
+
       if (isDemo) {
         await recordDemoVisitor({
           name: name.trim(),
