@@ -49,12 +49,20 @@ const LobbyManage = () => {
   const [addPhone, setAddPhone] = useState("");
   const [addVip, setAddVip] = useState(false);
   const [addServiceType, setAddServiceType] = useState<string>("");
+  const [addRollNumber, setAddRollNumber] = useState("");
+  const [addDeviceModel, setAddDeviceModel] = useState("");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [counterFilter, setCounterFilter] = useState<string>("all"); // "all" | "mine"
   const [adding, setAdding] = useState(false);
   const [shareModal, setShareModal] = useState<{ entry: QueueEntry; url: string } | null>(null);
   const [search, setSearch] = useState("");
   const [ringingEntryId, setRingingEntryId] = useState<string | null>(null);
   const ringChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [counters, setCounters] = useState<Counter[]>([]);
+  const [activeCounter, setActiveCounterState] = useState<string | null>(null);
+  const [countersOpen, setCountersOpen] = useState(false);
+  const [newCounterName, setNewCounterName] = useState("");
+
 
   const sendRingEvent = (entryId: string, action: "ring" | "stop") => {
     const ch = ringChannelRef.current;
