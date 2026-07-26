@@ -364,8 +364,24 @@ const LobbyManage = () => {
               <p className="text-xs text-muted-foreground">Lobby management</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-card px-1.5 py-1">
+              <IdCard className="ml-1 h-4 w-4 text-muted-foreground" />
+              <Select value={activeCounter ?? "__none"} onValueChange={onSelectCounter}>
+                <SelectTrigger className="h-8 min-w-[140px] border-0 bg-transparent px-2 text-sm shadow-none focus:ring-0">
+                  <SelectValue placeholder="My counter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">No counter</SelectItem>
+                  {counters.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCountersOpen(true)} title="Manage counters">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            </div>
             <InstallPWA />
+
             <Button asChild variant="outline" size="sm">
               <Link to={`/display/${lobbyId}`} target="_blank">
                 <Monitor className="mr-1 h-4 w-4" /> Display
