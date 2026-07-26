@@ -377,10 +377,21 @@ const JoinLobby = () => {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="roll">Roll number / Student or Employee ID <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input id="roll" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} maxLength={40}
+                  placeholder="e.g. CS-2021-045 or EMP1287" disabled={closed || full} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="model">Device model / description <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input id="model" value={deviceModel} onChange={(e) => setDeviceModel(e.target.value)} maxLength={80}
+                  placeholder="e.g. MacBook Pro 14, iPhone 13, Dell XPS" disabled={closed || full} />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="device">Device type <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Input id="device" value={deviceType} onChange={(e) => setDeviceType(e.target.value)} maxLength={80}
-                  placeholder="e.g. iPhone 14, Laptop" disabled={closed || full} />
+                  placeholder="e.g. Laptop, Phone, Tablet" disabled={closed || full} />
               </div>
+
               <Button variant="hero" className="w-full" onClick={onJoin} disabled={!name.trim() || joining || closed || full}>
                 {joining ? <Loader2 className="animate-spin" /> : full ? "Queue Full" : closed ? "Lobby closed" : <><LogIn className="mr-1" /> Join queue</>}
               </Button>
