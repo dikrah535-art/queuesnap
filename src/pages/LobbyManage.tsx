@@ -493,13 +493,29 @@ const LobbyManage = () => {
         <Card className="p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-semibold">Queue</h3>
-            <Input
-              placeholder="Search by name or phone…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-xs"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={counterFilter} onValueChange={setCounterFilter}>
+                <SelectTrigger className="h-9 w-[190px]">
+                  <SelectValue placeholder="Master queue" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Master queue (all)</SelectItem>
+                  <SelectItem value="mine" disabled={!activeCounter}>
+                    {activeCounter ? "Only my counter" : "Only my counter (pick one)"}
+                  </SelectItem>
+                  <SelectItem value="__unassigned">Unassigned</SelectItem>
+                  {counters.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Search name, phone, roll…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
           </div>
+
           <Tabs value={serviceFilter} onValueChange={setServiceFilter} className="mb-4">
             <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="all">All ({entries.length})</TabsTrigger>
