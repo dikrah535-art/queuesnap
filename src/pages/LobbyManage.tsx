@@ -213,7 +213,7 @@ const LobbyManage = () => {
   const onServeNext = async () => {
     if (!lobbyId || !lobby) return;
     try {
-      const next = await serveNext(lobbyId);
+      const next = await serveNext(lobbyId, activeCounter);
       toast.success("Next person called");
       if (next) {
         const tokenUrl = getTokenUrl(lobbyId, next.id);
