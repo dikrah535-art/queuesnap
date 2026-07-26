@@ -39,6 +39,9 @@ export interface QueueEntry {
   notified_email?: boolean;
   device_type: string | null;
   service_type?: string | null;
+  roll_number?: string | null;
+  device_model?: string | null;
+  counter_id?: string | null;
   position: number;
   status: QueueEntryStatus;
   ringing?: boolean;
@@ -47,6 +50,7 @@ export interface QueueEntry {
   served_at: string | null;
   last_confirmed_at?: string | null;
 }
+
 
 export interface WorkspaceMember {
   id: string;
