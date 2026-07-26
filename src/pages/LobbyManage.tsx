@@ -433,6 +433,8 @@ const LobbyManage = () => {
               <Label htmlFor="add-model">Device model / description <span className="text-muted-foreground text-xs">(optional)</span></Label>
               <Input id="add-model" placeholder="e.g. MacBook Pro 14, iPhone 13" value={addDeviceModel} onChange={(e) => setAddDeviceModel(e.target.value)} maxLength={80} />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-service">Service type</Label>
 
               <Select value={addServiceType} onValueChange={setAddServiceType}>
                 <SelectTrigger id="add-service"><SelectValue placeholder="Select a service (optional)" /></SelectTrigger>
