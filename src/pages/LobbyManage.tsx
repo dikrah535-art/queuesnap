@@ -593,8 +593,23 @@ const LobbyManage = () => {
                             <span>Waiting</span>
                           )}
                           {e.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {e.phone}</span>}
+                          {e.roll_number && (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+                              <IdCard className="h-3 w-3" /> {e.roll_number}
+                            </span>
+                          )}
+                          {e.device_model && (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 text-[11px] text-foreground">
+                              <Laptop className="h-3 w-3" /> {e.device_model}
+                            </span>
+                          )}
                           {e.device_type && <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3" /> {e.device_type}</span>}
                           {e.service_type && <span className="inline-flex items-center rounded-full bg-accent/40 px-2 py-0.5 text-[10px] font-medium">{e.service_type}</span>}
+                          {e.counter_id && (() => {
+                            const c = counters.find((x) => x.id === e.counter_id);
+                            return c ? <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">🏷 {c.name}</span> : null;
+                          })()}
+
                         </div>
                       </div>
                     </div>
