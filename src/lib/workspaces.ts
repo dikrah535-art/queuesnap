@@ -370,7 +370,8 @@ export async function fetchDemoVisitors(): Promise<DemoVisitor[]> {
 }
 
 export async function adminAddEntry(input: {
-  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string; isVip?: boolean; serviceType?: string;
+  lobbyId: string; name: string; phone?: string; email?: string; deviceType?: string;
+  isVip?: boolean; serviceType?: string; rollNumber?: string; deviceModel?: string;
 }) {
   const { data, error } = await supabase.rpc("admin_add_entry", {
     _lobby_id: input.lobbyId,
@@ -380,10 +381,13 @@ export async function adminAddEntry(input: {
     _device_type: input.deviceType ?? null,
     _is_vip: input.isVip ?? false,
     _service_type: input.serviceType ?? null,
+    _roll_number: input.rollNumber ?? null,
+    _device_model: input.deviceModel ?? null,
   } as never);
   if (error) throw error;
   return data as unknown as QueueEntry;
 }
+
 
 export async function sendTokenEmail(input: {
   email: string; name: string; tokenNumber: number; queueName: string; tokenUrl: string;
