@@ -426,7 +426,14 @@ const LobbyManage = () => {
               <Input id="add-phone" type="tel" placeholder="+91 98765 43210" value={addPhone} onChange={(e) => setAddPhone(e.target.value)} maxLength={32} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="add-service">Service type</Label>
+              <Label htmlFor="add-roll">Roll / ID <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-roll" placeholder="e.g. CS-2021-045" value={addRollNumber} onChange={(e) => setAddRollNumber(e.target.value)} maxLength={40} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-model">Device model / description <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input id="add-model" placeholder="e.g. MacBook Pro 14, iPhone 13" value={addDeviceModel} onChange={(e) => setAddDeviceModel(e.target.value)} maxLength={80} />
+            </div>
+
               <Select value={addServiceType} onValueChange={setAddServiceType}>
                 <SelectTrigger id="add-service"><SelectValue placeholder="Select a service (optional)" /></SelectTrigger>
                 <SelectContent>
