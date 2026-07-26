@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Power, RotateCcw, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, IdCard, Laptop, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Plus, Power, RotateCcw, Settings2, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,11 @@ import {
   type Lobby, type QueueEntry,
 } from "@/lib/workspaces";
 import { SERVICE_TYPES } from "@/lib/serviceTypes";
+import {
+  createCounter, deleteCounter, fetchCounters, getActiveCounter, setActiveCounter,
+  type Counter,
+} from "@/lib/counters";
+
 
 const sendWhatsAppToken = (phone: string, name: string, position: number, queueName: string, tokenUrl: string) => {
   const msg = `Hi ${name} 👋\n\nYou've been added to *${queueName}*!\n\n🎫 *Your Token: #${position}*\n\nTrack your position in real time:\n${tokenUrl}\n\n_Powered by QueueSnap_`;
