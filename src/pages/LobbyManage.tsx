@@ -267,7 +267,7 @@ const LobbyManage = () => {
   const onExportCsv = async () => {
     if (!lobbyId || !lobby) return;
     try {
-      const all = await fetchLobbyEntriesAdmin(lobbyId, true);
+      const all = await fetchLobbyEntriesAdmin(lobbyId, { includeAll: true });
       if (!all.length) { toast.info("No entries to export"); return; }
       const esc = (v: unknown) => {
         const s = v === null || v === undefined || v === "" ? "N/A" : String(v);
