@@ -264,6 +264,36 @@ const LobbyManage = () => {
     catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
+  const onExportCsv = async () => {
+    if (!lobbyId || !lobby) return;
+    try {
+      const all = await fetchLobbyEntriesAdmin(lobbyId, true);
+      if (!all.length) { toast.info("No entries to export"); return; }
+      const esc = (v: unknown) => {
+        const s = v === null || v === undefined || v === "" ? "N/A" : String(v);
+        return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : "");
+      const headers = ["Token #", "Visitor Name", "Roll Number", "Device Model", "Phone", "Email", "Service Type", "Counter", "Status", "VIP", "Created At", "Served At"];
+      const counterName = (id: string | null | undefined) => id ? (counters.find(c => c.id === id)?.name ?? id) : "";
+      const rows = all.map(e => [
+        e.position, e.name, e.roll_number, e.device_model, e.phone, e.email,
+        e.service_type, counterName(e.counter_id), e.status, e.is_vip ? "Yes" : "No",
+        iso(e.created_at), iso(e.served_at),
+      ].map(esc).join(","));
+      const csv = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      const slug = lobby.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      a.href = url; a.download = `queuesnap-audit-log-${slug}-${stamp}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${all.length} entries`);
+    } catch (e: any) { toast.error(e.message ?? "Export failed"); }
+  };
+
   const onAdd = async () => {
     if (!lobbyId || !addName.trim() || !lobby) return;
     if (addEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addEmail.trim())) {
