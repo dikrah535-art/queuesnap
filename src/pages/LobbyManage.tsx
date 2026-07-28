@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, IdCard, Laptop, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Plus, Power, RotateCcw, Settings2, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Download, IdCard, Laptop, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Plus, Power, RotateCcw, Settings2, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
