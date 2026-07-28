@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellOff, Copy, Crown, IdCard, Laptop, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Plus, Power, RotateCcw, Settings2, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, Crown, Download, IdCard, Laptop, Loader2, Mail, MessageCircle, Monitor, Phone, PlayCircle, Plus, Power, RotateCcw, Settings2, SkipForward, Smartphone, Sparkles, Trash2, TrendingUp, Undo2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -264,6 +264,36 @@ const LobbyManage = () => {
     catch (e: any) { toast.error(e.message ?? "Failed"); }
   };
 
+  const onExportCsv = async () => {
+    if (!lobbyId || !lobby) return;
+    try {
+      const all = await fetchLobbyEntriesAdmin(lobbyId, { includeAll: true });
+      if (!all.length) { toast.info("No entries to export"); return; }
+      const esc = (v: unknown) => {
+        const s = v === null || v === undefined || v === "" ? "N/A" : String(v);
+        return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : "");
+      const headers = ["Token #", "Visitor Name", "Roll Number", "Device Model", "Phone", "Email", "Service Type", "Counter", "Status", "VIP", "Created At", "Served At"];
+      const counterName = (id: string | null | undefined) => id ? (counters.find(c => c.id === id)?.name ?? id) : "";
+      const rows = all.map(e => [
+        e.position, e.name, e.roll_number, e.device_model, e.phone, e.email,
+        e.service_type, counterName(e.counter_id), e.status, e.is_vip ? "Yes" : "No",
+        iso(e.created_at), iso(e.served_at),
+      ].map(esc).join(","));
+      const csv = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      const slug = lobby.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      a.href = url; a.download = `queuesnap-audit-log-${slug}-${stamp}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${all.length} entries`);
+    } catch (e: any) { toast.error(e.message ?? "Export failed"); }
+  };
+
   const onAdd = async () => {
     if (!lobbyId || !addName.trim() || !lobby) return;
     if (addEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addEmail.trim())) {
@@ -475,6 +505,9 @@ const LobbyManage = () => {
               <PlayCircle className="mr-1" /> Serve next
             </Button>
             <Button variant="outline" onClick={onClear} disabled={total === 0}>Clear queue</Button>
+            <Button variant="outline" onClick={onExportCsv} title="Download audit log as CSV">
+              <Download className="mr-1 h-4 w-4" /> Export CSV
+            </Button>
             <Button variant="outline" onClick={onSimulate} disabled={simulating} title="Add 10 mock waiting entries">
               {simulating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
               Simulate 10
